@@ -1,0 +1,49 @@
+name: psych_support_app
+description: >
+  Adaptive Psychological Monitoring and Support Platform for Chronic Disease
+  Patients Using Conversational AI - Patient Mobile Application (Arabic / RTL).
+publish_to: "none"
+version: 0.4.0
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  provider: ^6.1.2
+
+  # Networking
+  http: ^1.2.1
+
+  # Local secure storage (JWT tokens)
+  flutter_secure_storage: ^9.2.2
+
+  # Charts (mood trend, risk progression)
+  fl_chart: ^0.68.0
+
+  # Date/number formatting (Arabic locale)
+  intl: ^0.20.2
+
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # To use the bundled Arabic-friendly font, add the .ttf files under
+  # assets/fonts/ and uncomment the block below (see README "Fonts" section).
+  # fonts:
+  #   - family: Cairo
+  #     fonts:
+  #       - asset: assets/fonts/Cairo-Regular.ttf
+  #       - asset: assets/fonts/Cairo-Bold.ttf
+  #         weight: 700

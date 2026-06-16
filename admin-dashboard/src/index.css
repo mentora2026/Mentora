@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-paper text-ink font-body antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: "Amiri", Georgia, serif;
+}
+
+/* Tabular numerals for scores/IDs */
+.tabular {
+  font-family: "IBM Plex Mono", monospace;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Risk spine - the recurring signature element */
+.risk-spine {
+  position: relative;
+}
+.risk-spine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  border-radius: 4px;
+  background-color: var(--risk-color, #6B8E8E);
+}
+
+/* Scrollbar - subtle */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #D8D3C8;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* Focus visibility */
+:focus-visible {
+  outline: 2px solid #0F3D3E;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,11 @@
+# Optional, heavier AI dependencies for the Sentiment Analysis Engine.
+#
+# Install these (and set ENABLE_HF_SENTIMENT=true in .env) to use the real
+# Hugging Face Arabic sentiment model instead of the lexicon-only fallback:
+#
+#   pip install -r requirements-ai.txt
+#
+# CPU-only torch is sufficient for this project's scale.
+
+transformers==4.41.2
+torch==2.3.1

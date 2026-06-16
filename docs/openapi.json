@@ -1,0 +1,4204 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Adaptive Psychological Monitoring Platform",
+    "description": "\n**Adaptive Psychological Monitoring and Support Platform for Chronic Disease\nPatients Using Conversational AI** — Backend API.\n\nThis API powers an Arabic-language adaptive conversational interviewer that\nmonitors the psychological wellbeing of chronic-disease patients, classifies\npsychological risk (Levels 1-5), and delivers personalized, non-diagnostic\nsupport content.\n\n### Language Rule\nAll technical fields (enums, IDs, timestamps) are in English. All\nhuman-readable content returned to clients - chatbot messages, notifications,\nrecommendations, risk explanations - is in Arabic (`*_ar` fields).\n\n### Authentication\nMost endpoints require a JWT access token:\n`Authorization: Bearer <access_token>`. Obtain one via `POST /auth/login` or\n`POST /auth/register`. Tokens expire after `ACCESS_TOKEN_EXPIRE_MINUTES`\n(default 30 min); use `POST /auth/refresh` with the refresh token to renew.\n\n### Roles\n- **patient**: default role for registered users; can access `/patients/*`,\n  `/interviews/*`, `/mood-entries`, `/risk-assessments`, `/recommendations`,\n  `/notifications`, `/reports/*`.\n- **admin** / **clinical_supervisor**: can additionally access `/admin/*`.\n\n### Ethical & Safety Notes\n- This platform is **not a diagnostic medical system** and does not replace a\n  doctor or mental health professional.\n- The Adaptive Interview Engine and Risk Assessment Engine are hybrid\n  rule-based + AI systems (see Step 1/3 architecture docs); risk levels are\n  always system-computed and explainable (`explanation_ar`,\n  `explanation_factors_json`).\n- If crisis/self-harm language is detected during an interview, the session\n  is immediately ended, the patient receives a supportive message and a\n  `professional_help` recommendation, and admins/clinical supervisors receive\n  a `risk_alert_admin` notification.\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register",
+        "description": "Register a new patient account.\n\nAlways creates a user with role `patient` and an associated (initially\nempty) `patient_profile`. Returns access + refresh tokens immediately -\nno separate login step is needed after registration.\n\nThe client should next call `PUT /patients/me` and\n`POST /patients/me/conditions` to complete onboarding\n(`onboarding_completed` becomes `true` once `disease_duration_months` and\n`activity_level` are set).",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "description": "Log in with email and password. Returns access + refresh tokens.\n\nWorks for all roles (`patient`, `admin`, `clinical_supervisor`) - the\nadmin dashboard uses this same endpoint and rejects non-admin tokens\nclient-side via `GET /auth/me`.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refresh",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "description": "Stateless JWT logout: the client discards its tokens.\nA token-blacklist (e.g., Redis) can be added later for hard invalidation.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Change Password",
+        "operationId": "change_password_api_v1_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Me",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/conditions": {
+      "get": {
+        "tags": [
+          "Patient Profile"
+        ],
+        "summary": "List Chronic Conditions",
+        "operationId": "list_chronic_conditions_api_v1_conditions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChronicConditionOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Chronic Conditions Api V1 Conditions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/patients/me": {
+      "get": {
+        "tags": [
+          "Patient Profile"
+        ],
+        "summary": "Get My Profile",
+        "operationId": "get_my_profile_api_v1_patients_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfileOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Patient Profile"
+        ],
+        "summary": "Update My Profile",
+        "operationId": "update_my_profile_api_v1_patients_me_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientProfileOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/patients/me/conditions": {
+      "get": {
+        "tags": [
+          "Patient Profile"
+        ],
+        "summary": "List My Conditions",
+        "operationId": "list_my_conditions_api_v1_patients_me_conditions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PatientConditionOut"
+                  },
+                  "type": "array",
+                  "title": "Response List My Conditions Api V1 Patients Me Conditions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Patient Profile"
+        ],
+        "summary": "Add My Condition",
+        "operationId": "add_my_condition_api_v1_patients_me_conditions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientConditionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientConditionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/patients/me/conditions/{condition_id}": {
+      "delete": {
+        "tags": [
+          "Patient Profile"
+        ],
+        "summary": "Remove My Condition",
+        "operationId": "remove_my_condition_api_v1_patients_me_conditions__condition_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "condition_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Condition Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interviews/start": {
+      "post": {
+        "tags": [
+          "Adaptive Interview"
+        ],
+        "summary": "Start Interview",
+        "description": "Start a new Adaptive Interview session.\n\nThe Adaptive Interview Engine selects the first question based on the\npatient's chronic condition(s) (Disease Knowledge Layer priority\ncategories) and returns it as `bot_message_ar`.\n\nFails with `409 Conflict` if the patient already has an in-progress\nsession - it must be completed via `/answer` or `/end` first.\n\nIn the rare case where no questions are configured at all, the session\nends immediately (`is_session_ended=true`) and a risk assessment is still\nproduced from the (empty) session.",
+        "operationId": "start_interview_api_v1_interviews_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewTurnResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/interviews/{session_id}/answer": {
+      "post": {
+        "tags": [
+          "Adaptive Interview"
+        ],
+        "summary": "Submit Answer",
+        "description": "Submit the patient's answer to the current question and advance the\ninterview.\n\nSend `answer_text_ar` for open-ended questions (the Sentiment Analysis\nEngine classifies the emotion: anxiety/stress/sadness/burnout/frustration/\npositive/neutral) or `answer_value_numeric` for `scale_1_5` /\n`yes_no` / `multiple_choice` questions.\n\nBehavior:\n- If the detected emotion strongly matches a Disease Knowledge Layer\n  pattern for the patient's condition(s), the Question Selector\n  **escalates** - the next question probes deeper into the related\n  category.\n- If the answer contains explicit crisis/self-harm language, the session\n  ends immediately (`is_session_ended=true`), `risk_assessment_id` points\n  to a **Level 5** assessment, a `professional_help` recommendation is\n  created, and admins receive a `risk_alert_admin` notification.\n- Otherwise, when the Depth/Termination Controller decides the session is\n  complete (minimum questions reached and all priority categories\n  covered, or the maximum question count is hit), `is_session_ended=true`\n  and `risk_assessment_id` is populated.\n- While `is_session_ended=false`, `bot_message_ar` contains the next\n  question.",
+        "operationId": "submit_answer_api_v1_interviews__session_id__answer_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewAnswerSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewTurnResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interviews/{session_id}/end": {
+      "post": {
+        "tags": [
+          "Adaptive Interview"
+        ],
+        "summary": "End Interview",
+        "description": "End an in-progress interview session early (e.g., the patient wants to\nstop before the engine would normally terminate it).\n\nA risk assessment and recommendations are still generated from whatever\nanswers were collected before ending.",
+        "operationId": "end_interview_api_v1_interviews__session_id__end_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewTurnResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interviews/history": {
+      "get": {
+        "tags": [
+          "Adaptive Interview"
+        ],
+        "summary": "Interview History",
+        "operationId": "interview_history_api_v1_interviews_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InterviewSessionOut"
+                  },
+                  "type": "array",
+                  "title": "Response Interview History Api V1 Interviews History Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/interviews/{session_id}": {
+      "get": {
+        "tags": [
+          "Adaptive Interview"
+        ],
+        "summary": "Get Interview",
+        "operationId": "get_interview_api_v1_interviews__session_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewSessionDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interviews/{session_id}/conversation": {
+      "get": {
+        "tags": [
+          "Adaptive Interview"
+        ],
+        "summary": "Get Interview Conversation",
+        "operationId": "get_interview_conversation_api_v1_interviews__session_id__conversation_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewSessionDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mood-entries": {
+      "post": {
+        "tags": [
+          "Mood Tracking"
+        ],
+        "summary": "Create Mood Entry",
+        "operationId": "create_mood_entry_api_v1_mood_entries_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoodEntryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoodEntryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Mood Tracking"
+        ],
+        "summary": "List Mood Entries",
+        "operationId": "list_mood_entries_api_v1_mood_entries_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MoodEntryOut"
+                  },
+                  "title": "Response List Mood Entries Api V1 Mood Entries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mood-entries/trend": {
+      "get": {
+        "tags": [
+          "Mood Tracking"
+        ],
+        "summary": "Mood Trend",
+        "operationId": "mood_trend_api_v1_mood_entries_trend_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MoodTrendPoint"
+                  },
+                  "title": "Response Mood Trend Api V1 Mood Entries Trend Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk-assessments/latest": {
+      "get": {
+        "tags": [
+          "Risk Assessment"
+        ],
+        "summary": "Get Latest Risk Assessment",
+        "operationId": "get_latest_risk_assessment_api_v1_risk_assessments_latest_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskAssessmentOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/risk-assessments": {
+      "get": {
+        "tags": [
+          "Risk Assessment"
+        ],
+        "summary": "List Risk Assessments",
+        "operationId": "list_risk_assessments_api_v1_risk_assessments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskAssessmentOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Risk Assessments Api V1 Risk Assessments Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/risk-assessments/{assessment_id}": {
+      "get": {
+        "tags": [
+          "Risk Assessment"
+        ],
+        "summary": "Get Risk Assessment",
+        "operationId": "get_risk_assessment_api_v1_risk_assessments__assessment_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskAssessmentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/me": {
+      "get": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Get My Recommendations",
+        "operationId": "get_my_recommendations_api_v1_recommendations_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PatientRecommendationOut"
+                  },
+                  "type": "array",
+                  "title": "Response Get My Recommendations Api V1 Recommendations Me Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/recommendations/{patient_recommendation_id}/viewed": {
+      "post": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Mark Recommendation Viewed",
+        "operationId": "mark_recommendation_viewed_api_v1_recommendations__patient_recommendation_id__viewed_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Patient Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{patient_recommendation_id}/feedback": {
+      "post": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Submit Recommendation Feedback",
+        "operationId": "submit_recommendation_feedback_api_v1_recommendations__patient_recommendation_id__feedback_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Patient Recommendation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationFeedback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "List Notifications",
+        "operationId": "list_notifications_api_v1_notifications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Notifications Api V1 Notifications Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/{notification_id}/read": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark Notification Read",
+        "operationId": "mark_notification_read_api_v1_notifications__notification_id__read_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/register": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Register Device",
+        "description": "Registers an FCM device token for push notifications.\n\nNOTE (future step): persist the token (e.g., in a `user_devices` table)\nand wire up the FCM sending service. For Step 2 this endpoint validates\nthe request shape and is ready for that integration.",
+        "operationId": "register_device_api_v1_devices_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/daily": {
+      "get": {
+        "tags": [
+          "Reports & Analytics"
+        ],
+        "summary": "Get Daily Report",
+        "operationId": "get_daily_report_api_v1_reports_daily_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/weekly": {
+      "get": {
+        "tags": [
+          "Reports & Analytics"
+        ],
+        "summary": "Get Weekly Report",
+        "operationId": "get_weekly_report_api_v1_reports_weekly_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/monthly": {
+      "get": {
+        "tags": [
+          "Reports & Analytics"
+        ],
+        "summary": "Get Monthly Report",
+        "operationId": "get_monthly_report_api_v1_reports_monthly_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/risk-progression": {
+      "get": {
+        "tags": [
+          "Reports & Analytics"
+        ],
+        "summary": "Get Risk Progression",
+        "operationId": "get_risk_progression_api_v1_reports_risk_progression_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskProgressionPoint"
+                  },
+                  "type": "array",
+                  "title": "Response Get Risk Progression Api V1 Reports Risk Progression Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "List Users",
+        "operationId": "list_users_api_v1_admin_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminUserOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Users Api V1 Admin Users Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Get User",
+        "operationId": "get_user_api_v1_admin_users__user_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/patient-detail": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Get Patient Detail",
+        "operationId": "get_patient_detail_api_v1_admin_users__user_id__patient_detail_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPatientDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/status": {
+      "patch": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Update User Status",
+        "operationId": "update_user_status_api_v1_admin_users__user_id__status_patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/risk-monitoring": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Risk Monitoring",
+        "operationId": "risk_monitoring_api_v1_admin_risk_monitoring_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskMonitoringEntry"
+                  },
+                  "type": "array",
+                  "title": "Response Risk Monitoring Api V1 Admin Risk Monitoring Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/interviews/{session_id}": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Get Interview Session",
+        "operationId": "get_interview_session_api_v1_admin_interviews__session_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminInterviewDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/recommendations": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "List Recommendations Admin",
+        "operationId": "list_recommendations_admin_api_v1_admin_recommendations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRecommendationOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Recommendations Admin Api V1 Admin Recommendations Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Create Recommendation",
+        "operationId": "create_recommendation_api_v1_admin_recommendations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecommendationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/recommendations/{recommendation_id}": {
+      "put": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Update Recommendation",
+        "operationId": "update_recommendation_api_v1_admin_recommendations__recommendation_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecommendationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Deactivate Recommendation",
+        "operationId": "deactivate_recommendation_api_v1_admin_recommendations__recommendation_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/content-library": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "List Content Library",
+        "operationId": "list_content_library_api_v1_admin_content_library_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContentLibraryOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Content Library Api V1 Admin Content Library Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Create Content Item",
+        "operationId": "create_content_item_api_v1_admin_content_library_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentLibraryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentLibraryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/analytics/overview": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Analytics Overview",
+        "operationId": "analytics_overview_api_v1_admin_analytics_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAnalyticsOverview"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "List Audit Logs",
+        "operationId": "list_audit_logs_api_v1_admin_audit_logs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditLogOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Audit Logs Api V1 Admin Audit Logs Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActivityLevel": {
+        "type": "string",
+        "enum": [
+          "sedentary",
+          "light",
+          "moderate",
+          "active"
+        ],
+        "title": "ActivityLevel"
+      },
+      "AdminAnalyticsOverview": {
+        "properties": {
+          "total_patients": {
+            "type": "integer",
+            "title": "Total Patients"
+          },
+          "active_patients_last_7_days": {
+            "type": "integer",
+            "title": "Active Patients Last 7 Days"
+          },
+          "risk_level_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Risk Level Distribution"
+          },
+          "total_sessions_last_30_days": {
+            "type": "integer",
+            "title": "Total Sessions Last 30 Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_patients",
+          "active_patients_last_7_days",
+          "risk_level_distribution",
+          "total_sessions_last_30_days"
+        ],
+        "title": "AdminAnalyticsOverview"
+      },
+      "AdminAnswerOut": {
+        "properties": {
+          "question_text_ar_snapshot": {
+            "type": "string",
+            "title": "Question Text Ar Snapshot"
+          },
+          "answer_text_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Text Ar"
+          },
+          "answer_value_numeric": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Value Numeric"
+          },
+          "sentiment_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Label"
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score"
+          },
+          "sequence_order": {
+            "type": "integer",
+            "title": "Sequence Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text_ar_snapshot",
+          "sequence_order"
+        ],
+        "title": "AdminAnswerOut"
+      },
+      "AdminConditionOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name_ar",
+          "is_primary"
+        ],
+        "title": "AdminConditionOut"
+      },
+      "AdminInterviewDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "patient_profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Profile Id"
+          },
+          "patient_full_name": {
+            "type": "string",
+            "title": "Patient Full Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/TriggerType"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "total_questions_asked": {
+            "type": "integer",
+            "title": "Total Questions Asked"
+          },
+          "session_summary_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Summary Ar"
+          },
+          "conversation": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageOut"
+            },
+            "type": "array",
+            "title": "Conversation",
+            "default": []
+          },
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AdminAnswerOut"
+            },
+            "type": "array",
+            "title": "Answers",
+            "default": []
+          },
+          "risk_assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminRiskAssessmentDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "patient_profile_id",
+          "patient_full_name",
+          "status",
+          "trigger_type",
+          "started_at",
+          "total_questions_asked"
+        ],
+        "title": "AdminInterviewDetail"
+      },
+      "AdminInterviewSessionSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/TriggerType"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "total_questions_asked": {
+            "type": "integer",
+            "title": "Total Questions Asked"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "trigger_type",
+          "started_at",
+          "total_questions_asked"
+        ],
+        "title": "AdminInterviewSessionSummary"
+      },
+      "AdminPatientDetail": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "patient_profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Profile Id"
+          },
+          "onboarding_completed": {
+            "type": "boolean",
+            "title": "Onboarding Completed"
+          },
+          "activity_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Level"
+          },
+          "social_support_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Social Support Level"
+          },
+          "sleep_hours_avg": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep Hours Avg"
+          },
+          "disease_duration_months": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disease Duration Months"
+          },
+          "conditions": {
+            "items": {
+              "$ref": "#/components/schemas/AdminConditionOut"
+            },
+            "type": "array",
+            "title": "Conditions",
+            "default": []
+          },
+          "interview_sessions": {
+            "items": {
+              "$ref": "#/components/schemas/AdminInterviewSessionSummary"
+            },
+            "type": "array",
+            "title": "Interview Sessions",
+            "default": []
+          },
+          "risk_history": {
+            "items": {
+              "$ref": "#/components/schemas/AdminRiskAssessmentSummary"
+            },
+            "type": "array",
+            "title": "Risk History",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "full_name",
+          "email",
+          "is_active",
+          "created_at",
+          "patient_profile_id",
+          "onboarding_completed"
+        ],
+        "title": "AdminPatientDetail"
+      },
+      "AdminRecommendationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "category": {
+            "$ref": "#/components/schemas/RecommendationCategory"
+          },
+          "chronic_condition_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chronic Condition Id"
+          },
+          "applicable_risk_levels": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Applicable Risk Levels"
+          },
+          "title_ar": {
+            "type": "string",
+            "title": "Title Ar"
+          },
+          "content_ar": {
+            "type": "string",
+            "title": "Content Ar"
+          },
+          "media_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Url"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "applicable_risk_levels",
+          "title_ar",
+          "content_ar",
+          "is_active",
+          "created_at"
+        ],
+        "title": "AdminRecommendationOut"
+      },
+      "AdminRiskAssessmentDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "risk_level": {
+            "type": "integer",
+            "title": "Risk Level"
+          },
+          "anxiety_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Anxiety Score"
+          },
+          "stress_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stress Score"
+          },
+          "sadness_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Sadness Score"
+          },
+          "burnout_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Burnout Score"
+          },
+          "sleep_quality_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Sleep Quality Score"
+          },
+          "adherence_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Adherence Score"
+          },
+          "composite_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Composite Score"
+          },
+          "explanation_ar": {
+            "type": "string",
+            "title": "Explanation Ar"
+          },
+          "explanation_factors_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Explanation Factors Json"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "risk_level",
+          "anxiety_score",
+          "stress_score",
+          "sadness_score",
+          "burnout_score",
+          "sleep_quality_score",
+          "adherence_score",
+          "composite_score",
+          "explanation_ar",
+          "explanation_factors_json",
+          "created_at"
+        ],
+        "title": "AdminRiskAssessmentDetail"
+      },
+      "AdminRiskAssessmentSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "risk_level": {
+            "type": "integer",
+            "title": "Risk Level"
+          },
+          "composite_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Composite Score"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "risk_level",
+          "composite_score",
+          "created_at"
+        ],
+        "title": "AdminRiskAssessmentSummary"
+      },
+      "AdminUserOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "is_active",
+          "created_at"
+        ],
+        "title": "AdminUserOut"
+      },
+      "AuditLogOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "actor_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor User Id"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "target_table": {
+            "type": "string",
+            "title": "Target Table"
+          },
+          "target_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Target Id"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Json"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "action",
+          "target_table",
+          "target_id",
+          "created_at"
+        ],
+        "title": "AuditLogOut"
+      },
+      "ChangePasswordRequest": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 8,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordRequest"
+      },
+      "ChatMessageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/ChatSender"
+          },
+          "message_text_ar": {
+            "type": "string",
+            "title": "Message Text Ar"
+          },
+          "message_order": {
+            "type": "integer",
+            "title": "Message Order"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sender",
+          "message_text_ar",
+          "message_order",
+          "created_at"
+        ],
+        "title": "ChatMessageOut"
+      },
+      "ChatSender": {
+        "type": "string",
+        "enum": [
+          "bot",
+          "patient"
+        ],
+        "title": "ChatSender"
+      },
+      "ChronicConditionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "description_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Ar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name_en",
+          "name_ar"
+        ],
+        "title": "ChronicConditionOut"
+      },
+      "ContentLibraryCreate": {
+        "properties": {
+          "content_type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "chronic_condition_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chronic Condition Id"
+          },
+          "title_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Ar"
+          },
+          "body_ar": {
+            "type": "string",
+            "title": "Body Ar"
+          },
+          "is_published": {
+            "type": "boolean",
+            "title": "Is Published",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "content_type",
+          "key",
+          "body_ar"
+        ],
+        "title": "ContentLibraryCreate"
+      },
+      "ContentLibraryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "content_type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Ar"
+          },
+          "body_ar": {
+            "type": "string",
+            "title": "Body Ar"
+          },
+          "is_published": {
+            "type": "boolean",
+            "title": "Is Published"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "content_type",
+          "key",
+          "body_ar",
+          "is_published"
+        ],
+        "title": "ContentLibraryOut"
+      },
+      "ContentType": {
+        "type": "string",
+        "enum": [
+          "article",
+          "tip",
+          "faq",
+          "onboarding_text",
+          "ui_label"
+        ],
+        "title": "ContentType"
+      },
+      "DeviceRegisterRequest": {
+        "properties": {
+          "fcm_token": {
+            "type": "string",
+            "title": "Fcm Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fcm_token"
+        ],
+        "title": "DeviceRegisterRequest"
+      },
+      "Gender": {
+        "type": "string",
+        "enum": [
+          "male",
+          "female",
+          "other"
+        ],
+        "title": "Gender"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InterviewAnswerSubmit": {
+        "properties": {
+          "answer_text_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Text Ar"
+          },
+          "answer_value_numeric": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Value Numeric"
+          }
+        },
+        "type": "object",
+        "title": "InterviewAnswerSubmit",
+        "description": "Patient's reply to the current question.\n- answer_text_ar: free-text Arabic reply (for open_text questions)\n- answer_value_numeric: numeric reply (for scale_1_5 / yes_no / multiple_choice questions)"
+      },
+      "InterviewSessionDetailOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/TriggerType"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "total_questions_asked": {
+            "type": "integer",
+            "title": "Total Questions Asked"
+          },
+          "session_summary_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Summary Ar"
+          },
+          "conversation": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageOut"
+            },
+            "type": "array",
+            "title": "Conversation",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "trigger_type",
+          "started_at",
+          "total_questions_asked"
+        ],
+        "title": "InterviewSessionDetailOut"
+      },
+      "InterviewSessionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/TriggerType"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "total_questions_asked": {
+            "type": "integer",
+            "title": "Total Questions Asked"
+          },
+          "session_summary_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Summary Ar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "trigger_type",
+          "started_at",
+          "total_questions_asked"
+        ],
+        "title": "InterviewSessionOut"
+      },
+      "InterviewStartRequest": {
+        "properties": {
+          "trigger_type": {
+            "$ref": "#/components/schemas/TriggerType",
+            "default": "manual"
+          }
+        },
+        "type": "object",
+        "title": "InterviewStartRequest"
+      },
+      "InterviewTurnResponse": {
+        "properties": {
+          "session": {
+            "$ref": "#/components/schemas/InterviewSessionOut"
+          },
+          "bot_message_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Message Ar"
+          },
+          "is_session_ended": {
+            "type": "boolean",
+            "title": "Is Session Ended",
+            "default": false
+          },
+          "risk_assessment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Assessment Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session"
+        ],
+        "title": "InterviewTurnResponse",
+        "description": "Response returned after starting a session or submitting an answer.\nEither contains the next bot message (question) or signals session end."
+      },
+      "MoodEntryCreate": {
+        "properties": {
+          "mood_value": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Mood Value"
+          },
+          "note_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Ar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mood_value"
+        ],
+        "title": "MoodEntryCreate"
+      },
+      "MoodEntryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "mood_value": {
+            "type": "integer",
+            "title": "Mood Value"
+          },
+          "note_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Ar"
+          },
+          "source": {
+            "$ref": "#/components/schemas/MoodSource"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "mood_value",
+          "source",
+          "recorded_at"
+        ],
+        "title": "MoodEntryOut"
+      },
+      "MoodSource": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "interview_derived"
+        ],
+        "title": "MoodSource"
+      },
+      "MoodTrendPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "average_mood": {
+            "type": "number",
+            "title": "Average Mood"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "average_mood"
+        ],
+        "title": "MoodTrendPoint"
+      },
+      "NotificationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "title_ar": {
+            "type": "string",
+            "title": "Title Ar"
+          },
+          "body_ar": {
+            "type": "string",
+            "title": "Body Ar"
+          },
+          "is_read": {
+            "type": "boolean",
+            "title": "Is Read"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NotificationStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "title_ar",
+          "body_ar",
+          "is_read",
+          "status",
+          "created_at"
+        ],
+        "title": "NotificationOut"
+      },
+      "NotificationStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "sent",
+          "failed"
+        ],
+        "title": "NotificationStatus"
+      },
+      "NotificationType": {
+        "type": "string",
+        "enum": [
+          "daily_checkin",
+          "follow_up",
+          "mood_reminder",
+          "recommendation_alert",
+          "engagement",
+          "risk_alert_admin"
+        ],
+        "title": "NotificationType"
+      },
+      "PatientConditionCreate": {
+        "properties": {
+          "chronic_condition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Chronic Condition Id"
+          },
+          "diagnosed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosed At"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "chronic_condition_id"
+        ],
+        "title": "PatientConditionCreate"
+      },
+      "PatientConditionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "chronic_condition": {
+            "$ref": "#/components/schemas/ChronicConditionOut"
+          },
+          "diagnosed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosed At"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "chronic_condition",
+          "is_primary"
+        ],
+        "title": "PatientConditionOut"
+      },
+      "PatientProfileOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Gender"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disease_duration_months": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disease Duration Months"
+          },
+          "medications": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medications"
+          },
+          "sleep_hours_avg": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep Hours Avg"
+          },
+          "activity_level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityLevel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "social_support_level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SocialSupportLevel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "medical_background": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Background"
+          },
+          "onboarding_completed": {
+            "type": "boolean",
+            "title": "Onboarding Completed"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "conditions": {
+            "items": {
+              "$ref": "#/components/schemas/PatientConditionOut"
+            },
+            "type": "array",
+            "title": "Conditions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "onboarding_completed",
+          "created_at"
+        ],
+        "title": "PatientProfileOut"
+      },
+      "PatientProfileUpdate": {
+        "properties": {
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Gender"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disease_duration_months": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disease Duration Months"
+          },
+          "medications": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medications"
+          },
+          "sleep_hours_avg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep Hours Avg"
+          },
+          "activity_level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityLevel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "social_support_level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SocialSupportLevel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "medical_background": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Background"
+          }
+        },
+        "type": "object",
+        "title": "PatientProfileUpdate"
+      },
+      "PatientRecommendationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "recommendation": {
+            "$ref": "#/components/schemas/RecommendationOut"
+          },
+          "delivered_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Delivered At"
+          },
+          "is_viewed": {
+            "type": "boolean",
+            "title": "Is Viewed"
+          },
+          "is_helpful_feedback": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Helpful Feedback"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "recommendation",
+          "delivered_at",
+          "is_viewed"
+        ],
+        "title": "PatientRecommendationOut"
+      },
+      "RecommendationCategory": {
+        "type": "string",
+        "enum": [
+          "breathing_exercise",
+          "relaxation",
+          "sleep_tip",
+          "stress_management",
+          "motivational",
+          "educational",
+          "professional_help"
+        ],
+        "title": "RecommendationCategory"
+      },
+      "RecommendationCreate": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/RecommendationCategory"
+          },
+          "chronic_condition_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chronic Condition Id"
+          },
+          "applicable_risk_levels": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Applicable Risk Levels"
+          },
+          "title_ar": {
+            "type": "string",
+            "title": "Title Ar"
+          },
+          "content_ar": {
+            "type": "string",
+            "title": "Content Ar"
+          },
+          "media_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "applicable_risk_levels",
+          "title_ar",
+          "content_ar"
+        ],
+        "title": "RecommendationCreate"
+      },
+      "RecommendationFeedback": {
+        "properties": {
+          "is_helpful": {
+            "type": "boolean",
+            "title": "Is Helpful"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_helpful"
+        ],
+        "title": "RecommendationFeedback"
+      },
+      "RecommendationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "category": {
+            "$ref": "#/components/schemas/RecommendationCategory"
+          },
+          "title_ar": {
+            "type": "string",
+            "title": "Title Ar"
+          },
+          "content_ar": {
+            "type": "string",
+            "title": "Content Ar"
+          },
+          "media_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "title_ar",
+          "content_ar"
+        ],
+        "title": "RecommendationOut"
+      },
+      "RecommendationUpdate": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecommendationCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chronic_condition_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chronic Condition Id"
+          },
+          "applicable_risk_levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicable Risk Levels"
+          },
+          "title_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Ar"
+          },
+          "content_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Ar"
+          },
+          "media_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Url"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "RecommendationUpdate"
+      },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest"
+      },
+      "ReportOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "report_type": {
+            "$ref": "#/components/schemas/ReportType"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "summary_ar": {
+            "type": "string",
+            "title": "Summary Ar"
+          },
+          "metrics_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics Json"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "report_type",
+          "period_start",
+          "period_end",
+          "summary_ar",
+          "metrics_json",
+          "generated_at"
+        ],
+        "title": "ReportOut"
+      },
+      "ReportType": {
+        "type": "string",
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly"
+        ],
+        "title": "ReportType"
+      },
+      "RiskAssessmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "interview_session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Interview Session Id"
+          },
+          "risk_level": {
+            "type": "integer",
+            "title": "Risk Level"
+          },
+          "anxiety_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Anxiety Score"
+          },
+          "stress_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stress Score"
+          },
+          "sadness_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Sadness Score"
+          },
+          "burnout_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Burnout Score"
+          },
+          "sleep_quality_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Sleep Quality Score"
+          },
+          "adherence_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Adherence Score"
+          },
+          "composite_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Composite Score"
+          },
+          "explanation_ar": {
+            "type": "string",
+            "title": "Explanation Ar"
+          },
+          "explanation_factors_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Explanation Factors Json"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "interview_session_id",
+          "risk_level",
+          "anxiety_score",
+          "stress_score",
+          "sadness_score",
+          "burnout_score",
+          "sleep_quality_score",
+          "adherence_score",
+          "composite_score",
+          "explanation_ar",
+          "explanation_factors_json",
+          "created_at"
+        ],
+        "title": "RiskAssessmentOut"
+      },
+      "RiskMonitoringEntry": {
+        "properties": {
+          "patient_profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Patient Profile Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "user_full_name": {
+            "type": "string",
+            "title": "User Full Name"
+          },
+          "latest_risk_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Risk Level"
+          },
+          "latest_assessment_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Assessment At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_profile_id",
+          "user_id",
+          "user_full_name"
+        ],
+        "title": "RiskMonitoringEntry"
+      },
+      "RiskProgressionPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Date"
+          },
+          "risk_level": {
+            "type": "integer",
+            "title": "Risk Level"
+          },
+          "composite_score": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Composite Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "risk_level",
+          "composite_score"
+        ],
+        "title": "RiskProgressionPoint"
+      },
+      "SessionStatus": {
+        "type": "string",
+        "enum": [
+          "in_progress",
+          "completed",
+          "abandoned"
+        ],
+        "title": "SessionStatus"
+      },
+      "SocialSupportLevel": {
+        "type": "string",
+        "enum": [
+          "none",
+          "low",
+          "medium",
+          "high"
+        ],
+        "title": "SocialSupportLevel"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token"
+        ],
+        "title": "TokenResponse"
+      },
+      "TriggerType": {
+        "type": "string",
+        "enum": [
+          "daily_checkin",
+          "manual",
+          "follow_up",
+          "scheduled"
+        ],
+        "title": "TriggerType"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "UserCreate"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone Number"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "preferred_language": {
+            "type": "string",
+            "title": "Preferred Language"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "is_active",
+          "preferred_language",
+          "created_at"
+        ],
+        "title": "UserOut"
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "patient",
+          "admin",
+          "clinical_supervisor"
+        ],
+        "title": "UserRole"
+      },
+      "UserStatusUpdate": {
+        "properties": {
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_active"
+        ],
+        "title": "UserStatusUpdate"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Service health check."
+    },
+    {
+      "name": "Authentication",
+      "description": "Registration, login, token refresh, and account management."
+    },
+    {
+      "name": "Patient Profile",
+      "description": "Patient profile management and the master list of chronic conditions."
+    },
+    {
+      "name": "Adaptive Interview",
+      "description": "The Adaptive Interview Engine: starts and progresses a conversational psychological assessment session, one question at a time, adapting based on the patient's chronic condition(s), sentiment, and history."
+    },
+    {
+      "name": "Mood Tracking",
+      "description": "Lightweight, high-frequency self-reported mood logging."
+    },
+    {
+      "name": "Risk Assessment",
+      "description": "Read-only access to risk assessments produced after each completed interview session (risk level 1-5, sub-scores, Arabic explanation)."
+    },
+    {
+      "name": "Recommendations",
+      "description": "Personalized, non-diagnostic recommendations delivered based on risk level and chronic condition."
+    },
+    {
+      "name": "Notifications",
+      "description": "In-app notifications and FCM device registration."
+    },
+    {
+      "name": "Reports & Analytics",
+      "description": "Daily/weekly/monthly summaries, mood trend, and risk progression."
+    },
+    {
+      "name": "Admin Dashboard",
+      "description": "Endpoints for `admin` / `clinical_supervisor` roles: user management, risk monitoring, interview review, recommendation/content management, platform analytics, and audit logs."
+    }
+  ]
+}
