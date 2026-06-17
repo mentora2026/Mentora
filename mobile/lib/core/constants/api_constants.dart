@@ -1,13 +1,10 @@
 /// Central place for backend API configuration.
 ///
-/// During development with an Android emulator, `10.0.2.2` maps to the host
-/// machine's `localhost`. For a physical device, replace this with your
-/// machine's LAN IP (e.g. `http://192.168.1.50:8000`) or your deployed
-/// backend URL (e.g. `https://api.yourapp.com`).
+/// Deployed backend API.
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = "http://10.0.2.2:8000/api/v1";
+  static const String baseUrl = "https://mentora-rv7y.onrender.com/api/v1";
 
   // Auth
   static const String register = "$baseUrl/auth/register";
