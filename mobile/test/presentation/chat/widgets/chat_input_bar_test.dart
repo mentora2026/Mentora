@@ -32,7 +32,8 @@ void main() {
       );
 
       await tester.enterText(find.byType(TextField), '  أشعر بالقلق  ');
-      await tester.tap(find.byIcon(Icons.send));
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.send_rounded));
       await tester.pump();
 
       expect(sentText, 'أشعر بالقلق');
@@ -55,7 +56,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byIcon(Icons.send));
+      await tester.tap(find.byIcon(Icons.send_rounded));
       await tester.pump();
 
       expect(callCount, 0);
@@ -81,7 +82,7 @@ void main() {
       // Scale picker is hidden by default.
       expect(find.text('3'), findsNothing);
 
-      await tester.tap(find.byIcon(Icons.linear_scale));
+      await tester.tap(find.byIcon(Icons.linear_scale_rounded));
       await tester.pump();
 
       // Scale picker now shows options 1-5.
@@ -113,8 +114,13 @@ void main() {
       final textField = tester.widget<TextField>(find.byType(TextField));
       expect(textField.enabled, isFalse);
 
-      final sendButton = tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.send));
-      expect(sendButton.onPressed, isNull);
+      final sendButton = tester.widget<InkWell>(
+        find.ancestor(
+          of: find.byIcon(Icons.send_rounded),
+          matching: find.byType(InkWell),
+        ).first,
+      );
+      expect(sendButton.onTap, isNull);
     });
 
     testWidgets('shows a loading indicator instead of the send button while sending', (tester) async {
@@ -129,7 +135,7 @@ void main() {
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.byIcon(Icons.send), findsNothing);
+      expect(find.byIcon(Icons.send_rounded), findsNothing);
     });
   });
 }

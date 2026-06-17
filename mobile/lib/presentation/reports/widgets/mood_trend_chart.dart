@@ -17,7 +17,7 @@ class MoodTrendChart extends StatelessWidget {
     if (points.isEmpty) {
       return const SizedBox(
         height: 180,
-        child: EmptyView(messageAr: AppStrings.noDataYet, icon: Icons.show_chart),
+        child: EmptyView(messageAr: AppStrings.noDataYet, icon: Icons.show_chart_rounded),
       );
     }
 
@@ -27,7 +27,7 @@ class MoodTrendChart extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 200,
+      height: 220,
       child: LineChart(
         LineChartData(
           minY: 1,
@@ -36,7 +36,7 @@ class MoodTrendChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: 1,
-            getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade200, strokeWidth: 1),
+            getDrawingHorizontalLine: (value) => FlLine(color: AppColors.border, strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
             topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -44,12 +44,18 @@ class MoodTrendChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 28,
+                reservedSize: 32,
                 interval: 1,
-                getTitlesWidget: (value, meta) => Text(
-                  value.toInt().toString(),
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                ),
+                getTitlesWidget: (value, meta) {
+                  if (value < 1 || value > 5) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(
+                      value.toInt().toString(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                    ),
+                  );
+                },
               ),
             ),
             bottomTitles: AxisTitles(
@@ -64,22 +70,58 @@ class MoodTrendChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       DateFormat("d/M").format(points[index].date),
-                      style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
                     ),
                   );
                 },
               ),
             ),
           ),
-          borderData: FlBorderData(show: false),
+          borderData: FlBorderData(
+            show: true,
+            border: Border(
+              bottom: BorderSide(color: AppColors.border),
+              left: BorderSide(color: AppColors.border),
+            ),
+          ),
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => AppColors.textPrimary,
+              getTooltipItems: (spots) => spots.map((spot) {
+                return LineTooltipItem(
+                  "المزاج: ${spot.y.toStringAsFixed(1)}",
+                  Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.white, fontSize: 12),
+                );
+              }).toList(),
+            ),
+          ),
           lineBarsData: [
             LineChartBarData(
               spots: spots,
               isCurved: true,
-              color: AppColors.primary,
+              curveSmoothness: 0.35,
+              color: AppColors.secondary,
               barWidth: 3,
-              dotData: const FlDotData(show: true),
-              belowBarData: BarAreaData(show: true, color: AppColors.primaryLight.withValues(alpha: 0.4)),
+              dotData: FlDotData(
+                show: true,
+                getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                  radius: 4,
+                  color: AppColors.surface,
+                  strokeWidth: 2.5,
+                  strokeColor: AppColors.secondary,
+                ),
+              ),
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.secondary.withValues(alpha: 0.25),
+                    AppColors.secondary.withValues(alpha: 0.02),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

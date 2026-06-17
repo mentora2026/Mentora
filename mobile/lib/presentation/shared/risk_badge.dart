@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
 
 class RiskLevelBadge extends StatelessWidget {
   final int riskLevel;
@@ -15,11 +16,11 @@ class RiskLevelBadge extends StatelessWidget {
     final label = AppStrings.riskLevelLabels[riskLevel] ?? "";
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: large ? 16 : 12, vertical: large ? 10 : 6),
+      padding: EdgeInsets.symmetric(horizontal: large ? 14 : 10, vertical: large ? 8 : 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: AppColors.riskBackground(riskLevel),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color, width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.45), width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -29,14 +30,14 @@ class RiskLevelBadge extends StatelessWidget {
             height: large ? 12 : 8,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Text(
-            "المستوى $riskLevel - $label",
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: large ? 16 : 13,
-            ),
+            "المستوى $riskLevel · $label",
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                  fontSize: large ? 14 : 12,
+                ),
           ),
         ],
       ),

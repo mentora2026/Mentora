@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../data/models/extras.dart';
 import '../../providers/recommendation_provider.dart';
+import '../shared/app_card.dart';
+import '../shared/section_header.dart';
 import '../shared/state_views.dart';
 
 class RecommendationsScreen extends StatefulWidget {
@@ -31,6 +34,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
       appBar: AppBar(title: const Text(AppStrings.recommendations)),
       body: SafeArea(
         child: RefreshIndicator(
+          color: AppColors.primary,
           onRefresh: () => provider.load(),
           child: Builder(
             builder: (context) {
@@ -43,17 +47,23 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               if (provider.recommendations.isEmpty) {
                 return const EmptyView(
                   messageAr: AppStrings.noRecommendations,
-                  icon: Icons.lightbulb_outline,
+                  icon: Icons.lightbulb_outline_rounded,
                 );
               }
 
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: provider.recommendations.length,
-                itemBuilder: (context, index) {
-                  final rec = provider.recommendations[index];
-                  return _RecommendationCard(recommendation: rec);
-                },
+              return ListView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                children: [
+                  SectionHeader(
+                    title: AppStrings.recommendations,
+                    subtitle: "توصيات مخصّصة بناءً على حالتك — اضغط لقراءة التفاصيل",
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  ...provider.recommendations.map((rec) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: _RecommendationCard(recommendation: rec),
+                      )),
+                ],
               );
             },
           ),
@@ -80,73 +90,104 @@ class _RecommendationCardState extends State<_RecommendationCard> {
     final rec = widget.recommendation;
     final categoryLabel = AppStrings.recommendationCategoryLabels[rec.recommendation.category] ?? "";
     final isCrisisCategory = rec.recommendation.category == "professional_help";
+    final accentColor = isCrisisCategory ? AppColors.risk5 : AppColors.primary;
 
-    return Card(
-      color: isCrisisCategory ? AppColors.risk5.withValues(alpha: 0.06) : null,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          setState(() => _expanded = !_expanded);
-          if (!_expanded) return;
-          context.read<RecommendationProvider>().markViewed(rec);
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AppCard(
+      color: isCrisisCategory ? AppColors.risk5.withValues(alpha: 0.04) : AppColors.surface,
+      borderSide: isCrisisCategory
+          ? BorderSide(color: AppColors.risk5.withValues(alpha: 0.25))
+          : null,
+      onTap: () {
+        setState(() => _expanded = !_expanded);
+        if (_expanded) context.read<RecommendationProvider>().markViewed(rec);
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  _CategoryIcon(category: rec.recommendation.category),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          categoryLabel,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                        Text(
-                          rec.recommendation.titleAr,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                      ],
+              _CategoryIcon(category: rec.recommendation.category, accentColor: accentColor),
+              const SizedBox(width: AppSpacing.sm + 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      categoryLabel,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: accentColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
                     ),
-                  ),
-                  Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.textSecondary),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      rec.recommendation.titleAr,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+                    ),
+                  ],
+                ),
               ),
-              if (_expanded) ...[
-                const SizedBox(height: 12),
-                Text(rec.recommendation.contentAr, style: const TextStyle(height: 1.6)),
-                const SizedBox(height: 16),
-                if (rec.isHelpfulFeedback == null)
-                  Row(
-                    children: [
-                      const Text(AppStrings.wasThisHelpful, style: TextStyle(color: AppColors.textSecondary)),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.thumb_up_outlined),
-                        color: AppColors.primary,
-                        onPressed: () => context.read<RecommendationProvider>().submitFeedback(rec, true),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.thumb_down_outlined),
-                        color: AppColors.textSecondary,
-                        onPressed: () => context.read<RecommendationProvider>().submitFeedback(rec, false),
-                      ),
-                    ],
-                  )
-                else
-                  const Text(
-                    AppStrings.thankYouForFeedback,
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                  ),
-              ],
+              AnimatedRotation(
+                turns: _expanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(Icons.expand_more_rounded, color: AppColors.textTertiary),
+              ),
             ],
           ),
-        ),
+          if (_expanded) ...[
+            const SizedBox(height: AppSpacing.md),
+            Divider(color: AppColors.border.withValues(alpha: 0.7), height: 1),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              rec.recommendation.contentAr,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.65, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            if (rec.isHelpfulFeedback == null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        AppStrings.wasThisHelpful,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.thumb_up_outlined),
+                      color: AppColors.primary,
+                      onPressed: () => context.read<RecommendationProvider>().submitFeedback(rec, true),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.thumb_down_outlined),
+                      color: AppColors.textSecondary,
+                      onPressed: () => context.read<RecommendationProvider>().submitFeedback(rec, false),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Row(
+                children: [
+                  Icon(Icons.check_circle_outline_rounded, color: AppColors.risk1, size: 18),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    AppStrings.thankYouForFeedback,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -154,27 +195,31 @@ class _RecommendationCardState extends State<_RecommendationCard> {
 
 class _CategoryIcon extends StatelessWidget {
   final String category;
+  final Color accentColor;
 
-  const _CategoryIcon({required this.category});
+  const _CategoryIcon({required this.category, required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
     final iconData = switch (category) {
-      "breathing_exercise" => Icons.air,
-      "relaxation" => Icons.self_improvement,
+      "breathing_exercise" => Icons.air_rounded,
+      "relaxation" => Icons.self_improvement_rounded,
       "sleep_tip" => Icons.bedtime_outlined,
       "stress_management" => Icons.spa_outlined,
       "motivational" => Icons.emoji_events_outlined,
       "educational" => Icons.menu_book_outlined,
-      "professional_help" => Icons.support_agent,
-      _ => Icons.lightbulb_outline,
+      "professional_help" => Icons.support_agent_rounded,
+      _ => Icons.lightbulb_outline_rounded,
     };
 
     return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
-      child: Icon(iconData, color: AppColors.primary, size: 22),
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      ),
+      child: Icon(iconData, color: accentColor, size: 22),
     );
   }
 }

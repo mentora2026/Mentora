@@ -29,6 +29,9 @@ dependencies:
   # Date/number formatting (Arabic locale)
   intl: ^0.20.2
 
+  # Arabic typography (Cairo — no bundled font assets required)
+  google_fonts: ^6.2.1
+
   cupertino_icons: ^1.0.6
 
 dev_dependencies:

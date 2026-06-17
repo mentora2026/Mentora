@@ -37,10 +37,10 @@ void main() {
       expect(align.alignment, Alignment.centerRight);
 
       final container = tester.widget<Container>(
-        find.descendant(of: find.byType(MessageBubble), matching: find.byType(Container)),
+        find.byKey(const ValueKey('message-bubble')),
       );
       final decoration = container.decoration as BoxDecoration;
-      expect(decoration.color, AppColors.primaryLight);
+      expect(decoration.color, AppColors.botBubble);
     });
 
     testWidgets('patient messages are left-aligned with the primary color', (tester) async {
@@ -50,10 +50,10 @@ void main() {
       expect(align.alignment, Alignment.centerLeft);
 
       final container = tester.widget<Container>(
-        find.descendant(of: find.byType(MessageBubble), matching: find.byType(Container)),
+        find.byKey(const ValueKey('message-bubble')),
       );
       final decoration = container.decoration as BoxDecoration;
-      expect(decoration.color, AppColors.primary);
+      expect(decoration.color, AppColors.patientBubble);
     });
 
     testWidgets('renders a formatted timestamp', (tester) async {

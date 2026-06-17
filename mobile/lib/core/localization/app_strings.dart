@@ -83,6 +83,7 @@ class AppStrings {
   static const String yes = "نعم";
   static const String no = "لا، أكمل";
   static const String scaleQuestionHint = "اختر تقييماً من 1 إلى 5";
+  static const String typingIndicator = "يكتب";
   static const String activeSessionExists = "توجد جلسة مفتوحة بالفعل";
 
   // Mood

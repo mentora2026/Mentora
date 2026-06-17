@@ -17,7 +17,7 @@ class RiskProgressionChart extends StatelessWidget {
     if (points.isEmpty) {
       return const SizedBox(
         height: 180,
-        child: EmptyView(messageAr: AppStrings.noDataYet, icon: Icons.timeline),
+        child: EmptyView(messageAr: AppStrings.noDataYet, icon: Icons.timeline_rounded),
       );
     }
 
@@ -31,8 +31,13 @@ class RiskProgressionChart extends StatelessWidget {
             BarChartRodData(
               toY: level.toDouble(),
               color: AppColors.riskColor(level),
-              width: 14,
-              borderRadius: BorderRadius.circular(4),
+              width: 16,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              backDrawRodData: BackgroundBarChartRodData(
+                show: true,
+                toY: 5,
+                color: AppColors.surfaceMuted,
+              ),
             ),
           ],
         ),
@@ -40,7 +45,7 @@ class RiskProgressionChart extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 200,
+      height: 220,
       child: BarChart(
         BarChartData(
           minY: 0,
@@ -49,7 +54,7 @@ class RiskProgressionChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: 1,
-            getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade200, strokeWidth: 1),
+            getDrawingHorizontalLine: (value) => FlLine(color: AppColors.border, strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
             topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -57,12 +62,18 @@ class RiskProgressionChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 28,
+                reservedSize: 32,
                 interval: 1,
-                getTitlesWidget: (value, meta) => Text(
-                  value.toInt().toString(),
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                ),
+                getTitlesWidget: (value, meta) {
+                  if (value < 1 || value > 5) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(
+                      value.toInt().toString(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                    ),
+                  );
+                },
               ),
             ),
             bottomTitles: AxisTitles(
@@ -77,14 +88,33 @@ class RiskProgressionChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       DateFormat("d/M").format(points[index].date),
-                      style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
                     ),
                   );
                 },
               ),
             ),
           ),
-          borderData: FlBorderData(show: false),
+          borderData: FlBorderData(
+            show: true,
+            border: Border(
+              bottom: BorderSide(color: AppColors.border),
+              left: BorderSide(color: AppColors.border),
+            ),
+          ),
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => AppColors.textPrimary,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                final level = rod.toY.toInt();
+                final label = AppStrings.riskLevelLabels[level] ?? "";
+                return BarTooltipItem(
+                  "المستوى $level · $label",
+                  Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.white, fontSize: 12),
+                );
+              },
+            ),
+          ),
           barGroups: barGroups,
         ),
       ),

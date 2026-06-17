@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../providers/interview_provider.dart';
+import '../shared/app_card.dart';
 import '../shared/state_views.dart';
 import 'widgets/chat_input_bar.dart';
 import 'widgets/message_bubble.dart';
@@ -60,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
         content: const Text(AppStrings.endSessionConfirm),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text(AppStrings.no)),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text(AppStrings.yes)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text(AppStrings.yes)),
         ],
       ),
     );
@@ -76,8 +78,17 @@ class _ChatScreenState extends State<ChatScreen> {
     final provider = context.watch<InterviewProvider>();
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppStrings.chatTitle),
+        title: Column(
+          children: [
+            Text(AppStrings.chatTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              "مساحة آمنة للمحادثة",
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+            ),
+          ],
+        ),
         actions: [
           if (provider.currentSession != null && !provider.sessionEnded)
             IconButton(
@@ -106,7 +117,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                     itemCount: provider.messages.length + (provider.isSending ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == provider.messages.length) {
@@ -118,24 +129,32 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 if (provider.sessionEnded)
                   Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        const Divider(),
-                        const SizedBox(height: 8),
-                        const Text(
-                          AppStrings.sessionEnded,
-                          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () async {
-                            await provider.startNewSession();
-                            _scrollToBottom();
-                          },
-                          child: const Text(AppStrings.startNewSession),
-                        ),
-                      ],
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: AppCard(
+                      child: Column(
+                        children: [
+                          Icon(Icons.check_circle_outline_rounded, color: AppColors.risk1, size: 36),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            AppStrings.sessionEnded,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            "شكراً لمشاركتك. يمكنك مراجعة التوصيات والتقارير من الصفحة الرئيسية.",
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          FilledButton(
+                            onPressed: () async {
+                              await provider.startNewSession();
+                              _scrollToBottom();
+                            },
+                            child: const Text(AppStrings.startNewSession),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 else

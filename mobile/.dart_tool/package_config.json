@@ -146,6 +146,12 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "google_fonts",
+      "rootUri": "file:///home/zeyad/.pub-cache/hosted/pub.dev/google_fonts-6.3.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
       "name": "hooks",
       "rootUri": "file:///home/zeyad/.pub-cache/hosted/pub.dev/hooks-2.0.2",
       "packageUri": "lib/",

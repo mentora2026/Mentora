@@ -2,14 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
+import 'app_card.dart';
 
 class LoadingView extends StatelessWidget {
   const LoadingView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: CircularProgressIndicator(color: AppColors.primary),
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2.5),
+          const SizedBox(height: AppSpacing.md),
+          Text(AppStrings.loading, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
     );
   }
 }
@@ -24,18 +33,32 @@ class ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, color: AppColors.textSecondary, size: 48),
-            const SizedBox(height: 12),
-            Text(messageAr, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary)),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              ElevatedButton(onPressed: onRetry, child: const Text(AppStrings.retry)),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: AppCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.risk5.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.error_outline_rounded, color: AppColors.risk5, size: 28),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                messageAr,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              ),
+              if (onRetry != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                FilledButton(onPressed: onRetry, child: const Text(AppStrings.retry)),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -52,13 +75,25 @@ class EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppColors.textSecondary, size: 48),
-            const SizedBox(height: 12),
-            Text(messageAr, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary)),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: AppColors.textSecondary, size: 30),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              messageAr,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            ),
           ],
         ),
       ),

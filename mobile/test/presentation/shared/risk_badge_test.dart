@@ -18,7 +18,7 @@ void main() {
         await tester.pumpWidget(_wrap(RiskLevelBadge(riskLevel: level)));
 
         final expectedLabel = AppStrings.riskLevelLabels[level]!;
-        expect(find.text('المستوى $level - $expectedLabel'), findsOneWidget);
+        expect(find.text('المستوى $level · $expectedLabel'), findsOneWidget);
       }
     });
 
@@ -26,7 +26,7 @@ void main() {
       await tester.pumpWidget(_wrap(const RiskLevelBadge(riskLevel: 3, large: true)));
 
       final text = tester.widget<Text>(find.textContaining('المستوى 3'));
-      expect(text.style?.fontSize, 16);
+      expect(text.style?.fontSize, 14);
 
       // The colored indicator dot should be 12x12 in the large variant.
       final dotFinder = find.descendant(
