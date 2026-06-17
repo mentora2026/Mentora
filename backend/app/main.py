@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.seed import seed
 
 API_DESCRIPTION = """
 **Adaptive Psychological Monitoring and Support Platform for Chronic Disease
@@ -99,6 +100,12 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+
+@app.on_event("startup")
+def seed_on_startup() -> None:
+    if settings.SEED_ON_STARTUP:
+        seed()
 
 
 @app.get("/", tags=["Health"])

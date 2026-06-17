@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Adaptive Psychological Monitoring Platform"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
+    SEED_ON_STARTUP: bool = False
 
     # Security
     SECRET_KEY: str = "change-this-to-a-long-random-secret-key"
