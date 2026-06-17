@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/localization/app_strings.dart';
+import 'core/navigation/app_messenger.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/shared/auth_gate.dart';
 import 'providers/auth_provider.dart';
@@ -35,6 +36,7 @@ class PsychSupportApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
+        scaffoldMessengerKey: AppMessenger.key,
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,

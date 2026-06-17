@@ -20,10 +20,14 @@ class AuthRepository {
         "email": email,
         "password": password,
         "full_name": fullName,
-        if (phoneNumber != null && phoneNumber.isNotEmpty) "phone_number": phoneNumber,
+        if (phoneNumber != null && phoneNumber.isNotEmpty)
+          "phone_number": phoneNumber,
       },
     );
-    await _saveTokens(response as Map<String, dynamic>);
+    // The backend returns tokens after registration, but the app intentionally
+    // sends new users back to the login screen so the flow is explicit.
+    response as Map<String, dynamic>;
+    await _tokenStorage.clear();
   }
 
   Future<void> login({required String email, required String password}) async {

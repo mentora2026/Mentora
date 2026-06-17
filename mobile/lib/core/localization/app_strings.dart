@@ -8,7 +8,7 @@ class AppStrings {
   AppStrings._();
 
   // App
-  static const String appName = "منصة الدعم النفسي";
+  static const String appName = "Mentora";
 
   // Auth
   static const String login = "تسجيل الدخول";
@@ -22,9 +22,13 @@ class AppStrings {
   static const String alreadyHaveAccount = "لديك حساب بالفعل؟ سجّل الدخول";
   static const String loginButton = "دخول";
   static const String registerButton = "إنشاء الحساب";
+  static const String loginSuccess = "تم تسجيل الدخول بنجاح";
+  static const String registerSuccess =
+      "تم إنشاء الحساب بنجاح، يمكنك تسجيل الدخول الآن";
   static const String logout = "تسجيل الخروج";
   static const String passwordsDoNotMatch = "كلمتا المرور غير متطابقتين";
-  static const String invalidCredentials = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
+  static const String invalidCredentials =
+      "البريد الإلكتروني أو كلمة المرور غير صحيحة";
 
   // Onboarding / Profile
   static const String profileSetupTitle = "إعداد الملف الشخصي";
@@ -60,7 +64,8 @@ class AppStrings {
   static const String startInterview = "بدء محادثة تفاعلية";
   static const String continueInterview = "إكمال المحادثة الحالية";
   static const String latestRiskLevel = "آخر تقييم لحالتك النفسية";
-  static const String noAssessmentYet = "لا يوجد تقييم متاح بعد. ابدأ محادثة لمعرفة حالتك.";
+  static const String noAssessmentYet =
+      "لا يوجد تقييم متاح بعد. ابدأ محادثة لمعرفة حالتك.";
   static const String quickMoodLog = "تسجيل سريع للحالة المزاجية";
 
   // Risk levels

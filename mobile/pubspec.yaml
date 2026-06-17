@@ -41,6 +41,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/app_icon.png
 
   # To use the bundled Arabic-friendly font, add the .ttf files under
   # assets/fonts/ and uncomment the block below (see README "Fonts" section).

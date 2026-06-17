@@ -44,11 +44,16 @@ class AuthScaffold extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
               _AuthHero(),
               const SizedBox(height: AppSpacing.xl),
-              Text(title, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+              Text(title,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  textAlign: TextAlign.center),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -67,7 +72,10 @@ class AuthScaffold extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               Text(
                 "منصة دعم نفسي غير تشخيصية — نحن هنا لمساعدتك",
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontSize: 11),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -87,19 +95,23 @@ class _AuthHero extends StatelessWidget {
         Container(
           width: 88,
           height: 88,
+          padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [
-                AppColors.primary.withValues(alpha: 0.12),
-                AppColors.secondaryLight,
-              ],
-            ),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
             border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          child: const Icon(Icons.spa_outlined, size: 44, color: AppColors.primary),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            child: Image.asset('assets/images/app_icon.png', fit: BoxFit.cover),
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
@@ -122,7 +134,8 @@ class _ErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
       decoration: BoxDecoration(
         color: AppColors.risk5.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -131,7 +144,8 @@ class _ErrorBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: AppColors.risk5, size: 20),
+          const Icon(Icons.info_outline_rounded,
+              color: AppColors.risk5, size: 20),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(

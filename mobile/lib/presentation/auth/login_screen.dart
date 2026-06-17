@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/localization/app_strings.dart';
+import '../../core/navigation/app_messenger.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_scaffold.dart';
@@ -40,17 +41,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!success && mounted) {
       setState(() {
-        _localError = authProvider.errorMessageAr ?? AppStrings.somethingWentWrong;
+        _localError =
+            authProvider.errorMessageAr ?? AppStrings.somethingWentWrong;
       });
+      return;
+    }
+
+    if (success) {
+      AppMessenger.showSuccess(AppStrings.loginSuccess);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final error = _localError ?? (authProvider.errorMessageAr != null && !authProvider.isLoading
-        ? authProvider.errorMessageAr
-        : null);
+    final error = _localError ??
+        (authProvider.errorMessageAr != null && !authProvider.isLoading
+            ? authProvider.errorMessageAr
+            : null);
 
     return AuthScaffold(
       title: AppStrings.login,
@@ -71,7 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 prefixIcon: Icon(Icons.email_outlined),
               ),
               validator: (value) {
-                if (value == null || value.trim().isEmpty) return AppStrings.requiredField;
+                if (value == null || value.trim().isEmpty) {
+                  return AppStrings.requiredField;
+                }
                 if (!value.contains("@")) return "البريد الإلكتروني غير صالح";
                 return null;
               },
@@ -86,12 +96,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 labelText: AppStrings.password,
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
                 suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  icon: Icon(_obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) return AppStrings.requiredField;
+                if (value == null || value.isEmpty) {
+                  return AppStrings.requiredField;
+                }
                 return null;
               },
             ),
@@ -102,7 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? const SizedBox(
                       height: 22,
                       width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : const Text(AppStrings.loginButton),
             ),
@@ -111,7 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       footer: TextButton(
         onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
         },
         child: const Text(AppStrings.dontHaveAccount),
       ),

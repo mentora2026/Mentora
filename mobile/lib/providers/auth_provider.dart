@@ -67,8 +67,8 @@ class AuthProvider extends ChangeNotifier {
         fullName: fullName,
         phoneNumber: phoneNumber,
       );
-      currentUser = await _authRepository.getCurrentUser();
-      status = AuthStatus.authenticated;
+      currentUser = null;
+      status = AuthStatus.unauthenticated;
       isLoading = false;
       notifyListeners();
       return true;
