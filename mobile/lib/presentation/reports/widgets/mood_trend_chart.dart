@@ -17,7 +17,8 @@ class MoodTrendChart extends StatelessWidget {
     if (points.isEmpty) {
       return const SizedBox(
         height: 180,
-        child: EmptyView(messageAr: AppStrings.noDataYet, icon: Icons.show_chart_rounded),
+        child: EmptyView(
+            messageAr: AppStrings.noDataYet, icon: Icons.show_chart_rounded),
       );
     }
 
@@ -36,11 +37,14 @@ class MoodTrendChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: 1,
-            getDrawingHorizontalLine: (value) => FlLine(color: AppColors.border, strokeWidth: 1),
+            getDrawingHorizontalLine: (value) =>
+                const FlLine(color: AppColors.border, strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -52,7 +56,10 @@ class MoodTrendChart extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 4),
                     child: Text(
                       value.toInt().toString(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontSize: 11),
                     ),
                   );
                 },
@@ -62,15 +69,22 @@ class MoodTrendChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 28,
-                interval: (points.length / 4).clamp(1, double.infinity).floorToDouble(),
+                interval: (points.length / 4)
+                    .clamp(1, double.infinity)
+                    .floorToDouble(),
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
-                  if (index < 0 || index >= points.length) return const SizedBox.shrink();
+                  if (index < 0 || index >= points.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       DateFormat("d/M").format(points[index].date),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontSize: 10),
                     ),
                   );
                 },
@@ -79,7 +93,7 @@ class MoodTrendChart extends StatelessWidget {
           ),
           borderData: FlBorderData(
             show: true,
-            border: Border(
+            border: const Border(
               bottom: BorderSide(color: AppColors.border),
               left: BorderSide(color: AppColors.border),
             ),
@@ -90,7 +104,10 @@ class MoodTrendChart extends StatelessWidget {
               getTooltipItems: (spots) => spots.map((spot) {
                 return LineTooltipItem(
                   "المزاج: ${spot.y.toStringAsFixed(1)}",
-                  Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.white, fontSize: 12),
+                  Theme.of(context)
+                      .textTheme
+                      .bodySmall!
+                      .copyWith(color: Colors.white, fontSize: 12),
                 );
               }).toList(),
             ),
@@ -104,7 +121,8 @@ class MoodTrendChart extends StatelessWidget {
               barWidth: 3,
               dotData: FlDotData(
                 show: true,
-                getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                getDotPainter: (spot, percent, bar, index) =>
+                    FlDotCirclePainter(
                   radius: 4,
                   color: AppColors.surface,
                   strokeWidth: 2.5,

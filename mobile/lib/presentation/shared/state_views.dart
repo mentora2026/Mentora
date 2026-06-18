@@ -14,9 +14,11 @@ class LoadingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2.5),
+          const CircularProgressIndicator(
+              color: AppColors.primary, strokeWidth: 2.5),
           const SizedBox(height: AppSpacing.md),
-          Text(AppStrings.loading, style: Theme.of(context).textTheme.bodySmall),
+          Text(AppStrings.loading,
+              style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
@@ -45,17 +47,22 @@ class ErrorView extends StatelessWidget {
                   color: AppColors.risk5.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.error_outline_rounded, color: AppColors.risk5, size: 28),
+                child: const Icon(Icons.error_outline_rounded,
+                    color: AppColors.risk5, size: 28),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 messageAr,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: AppColors.textSecondary),
               ),
               if (onRetry != null) ...[
                 const SizedBox(height: AppSpacing.md),
-                FilledButton(onPressed: onRetry, child: const Text(AppStrings.retry)),
+                FilledButton(
+                    onPressed: onRetry, child: const Text(AppStrings.retry)),
               ],
             ],
           ),
@@ -69,7 +76,8 @@ class EmptyView extends StatelessWidget {
   final String messageAr;
   final IconData icon;
 
-  const EmptyView({super.key, required this.messageAr, this.icon = Icons.inbox_outlined});
+  const EmptyView(
+      {super.key, required this.messageAr, this.icon = Icons.inbox_outlined});
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +90,7 @@ class EmptyView extends StatelessWidget {
             Container(
               width: 64,
               height: 64,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.surfaceMuted,
                 shape: BoxShape.circle,
               ),
@@ -92,7 +100,10 @@ class EmptyView extends StatelessWidget {
             Text(
               messageAr,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),

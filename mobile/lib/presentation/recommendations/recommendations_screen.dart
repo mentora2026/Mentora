@@ -41,8 +41,11 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               if (provider.isLoading && provider.recommendations.isEmpty) {
                 return const LoadingView();
               }
-              if (provider.errorMessageAr != null && provider.recommendations.isEmpty) {
-                return ErrorView(messageAr: provider.errorMessageAr!, onRetry: () => provider.load());
+              if (provider.errorMessageAr != null &&
+                  provider.recommendations.isEmpty) {
+                return ErrorView(
+                    messageAr: provider.errorMessageAr!,
+                    onRetry: () => provider.load());
               }
               if (provider.recommendations.isEmpty) {
                 return const EmptyView(
@@ -54,9 +57,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               return ListView(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 children: [
-                  SectionHeader(
+                  const SectionHeader(
                     title: AppStrings.recommendations,
-                    subtitle: "توصيات مخصّصة بناءً على حالتك — اضغط لقراءة التفاصيل",
+                    subtitle:
+                        "توصيات مخصّصة بناءً على حالتك — اضغط لقراءة التفاصيل",
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   ...provider.recommendations.map((rec) => Padding(
@@ -88,12 +92,16 @@ class _RecommendationCardState extends State<_RecommendationCard> {
   @override
   Widget build(BuildContext context) {
     final rec = widget.recommendation;
-    final categoryLabel = AppStrings.recommendationCategoryLabels[rec.recommendation.category] ?? "";
+    final categoryLabel =
+        AppStrings.recommendationCategoryLabels[rec.recommendation.category] ??
+            "";
     final isCrisisCategory = rec.recommendation.category == "professional_help";
     final accentColor = isCrisisCategory ? AppColors.risk5 : AppColors.primary;
 
     return AppCard(
-      color: isCrisisCategory ? AppColors.risk5.withValues(alpha: 0.04) : AppColors.surface,
+      color: isCrisisCategory
+          ? AppColors.risk5.withValues(alpha: 0.04)
+          : AppColors.surface,
       borderSide: isCrisisCategory
           ? BorderSide(color: AppColors.risk5.withValues(alpha: 0.25))
           : null,
@@ -106,7 +114,9 @@ class _RecommendationCardState extends State<_RecommendationCard> {
         children: [
           Row(
             children: [
-              _CategoryIcon(category: rec.recommendation.category, accentColor: accentColor),
+              _CategoryIcon(
+                  category: rec.recommendation.category,
+                  accentColor: accentColor),
               const SizedBox(width: AppSpacing.sm + 2),
               Expanded(
                 child: Column(
@@ -123,7 +133,10 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                     const SizedBox(height: 2),
                     Text(
                       rec.recommendation.titleAr,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontSize: 15),
                     ),
                   ],
                 ),
@@ -131,7 +144,8 @@ class _RecommendationCardState extends State<_RecommendationCard> {
               AnimatedRotation(
                 turns: _expanded ? 0.5 : 0,
                 duration: const Duration(milliseconds: 200),
-                child: Icon(Icons.expand_more_rounded, color: AppColors.textTertiary),
+                child: const Icon(Icons.expand_more_rounded,
+                    color: AppColors.textTertiary),
               ),
             ],
           ),
@@ -141,12 +155,16 @@ class _RecommendationCardState extends State<_RecommendationCard> {
             const SizedBox(height: AppSpacing.md),
             Text(
               rec.recommendation.contentAr,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.65, color: AppColors.textPrimary),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(height: 1.65, color: AppColors.textPrimary),
             ),
             const SizedBox(height: AppSpacing.md),
             if (rec.isHelpfulFeedback == null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
@@ -162,12 +180,16 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                     IconButton(
                       icon: const Icon(Icons.thumb_up_outlined),
                       color: AppColors.primary,
-                      onPressed: () => context.read<RecommendationProvider>().submitFeedback(rec, true),
+                      onPressed: () => context
+                          .read<RecommendationProvider>()
+                          .submitFeedback(rec, true),
                     ),
                     IconButton(
                       icon: const Icon(Icons.thumb_down_outlined),
                       color: AppColors.textSecondary,
-                      onPressed: () => context.read<RecommendationProvider>().submitFeedback(rec, false),
+                      onPressed: () => context
+                          .read<RecommendationProvider>()
+                          .submitFeedback(rec, false),
                     ),
                   ],
                 ),
@@ -175,7 +197,8 @@ class _RecommendationCardState extends State<_RecommendationCard> {
             else
               Row(
                 children: [
-                  Icon(Icons.check_circle_outline_rounded, color: AppColors.risk1, size: 18),
+                  const Icon(Icons.check_circle_outline_rounded,
+                      color: AppColors.risk1, size: 18),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     AppStrings.thankYouForFeedback,

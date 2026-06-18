@@ -61,8 +61,12 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Text(AppStrings.endSessionEarly),
         content: const Text(AppStrings.endSessionConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text(AppStrings.no)),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text(AppStrings.yes)),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(AppStrings.no)),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(AppStrings.yes)),
         ],
       ),
     );
@@ -82,10 +86,12 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: Column(
           children: [
-            Text(AppStrings.chatTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(AppStrings.chatTitle,
+                style: Theme.of(context).textTheme.titleMedium),
             Text(
               "مساحة آمنة للمحادثة",
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
             ),
           ],
         ),
@@ -117,8 +123,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                    itemCount: provider.messages.length + (provider.isSending ? 1 : 0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                    itemCount:
+                        provider.messages.length + (provider.isSending ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == provider.messages.length) {
                         return const TypingIndicator();
@@ -133,7 +141,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: AppCard(
                       child: Column(
                         children: [
-                          Icon(Icons.check_circle_outline_rounded, color: AppColors.risk1, size: 36),
+                          const Icon(Icons.check_circle_outline_rounded,
+                              color: AppColors.risk1, size: 36),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
                             AppStrings.sessionEnded,
@@ -143,7 +152,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           Text(
                             "شكراً لمشاركتك. يمكنك مراجعة التوصيات والتقارير من الصفحة الرئيسية.",
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(height: 1.5),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           FilledButton(
@@ -160,9 +172,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 else
                   ChatInputBar(
                     isSending: provider.isSending,
-                    isEnabled: provider.currentSession != null && !provider.sessionEnded,
+                    isEnabled: provider.currentSession != null &&
+                        !provider.sessionEnded,
                     onSend: ({textAr, valueNumeric}) async {
-                      await provider.sendAnswer(textAr: textAr, valueNumeric: valueNumeric);
+                      await provider.sendAnswer(
+                          textAr: textAr, valueNumeric: valueNumeric);
                       _scrollToBottom();
                     },
                   ),

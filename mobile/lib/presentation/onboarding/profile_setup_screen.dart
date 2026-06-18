@@ -12,7 +12,8 @@ class ProfileSetupScreen extends StatefulWidget {
   final bool isEditMode;
   final VoidCallback? onCompleted;
 
-  const ProfileSetupScreen({super.key, this.isEditMode = false, this.onCompleted});
+  const ProfileSetupScreen(
+      {super.key, this.isEditMode = false, this.onCompleted});
 
   @override
   State<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
@@ -45,7 +46,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     setState(() {
       if (profile.diseaseDurationMonths != null) {
-        _diseaseDurationController.text = profile.diseaseDurationMonths!.toString();
+        _diseaseDurationController.text =
+            profile.diseaseDurationMonths!.toString();
       }
       _medicationsController.text = profile.medications ?? "";
       if (profile.sleepHoursAvg != null) {
@@ -72,12 +74,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final provider = context.read<ProfileProvider>();
     final success = await provider.updateProfile(
       diseaseDurationMonths: num.tryParse(_diseaseDurationController.text),
-      medications: _medicationsController.text.trim().isEmpty ? null : _medicationsController.text.trim(),
+      medications: _medicationsController.text.trim().isEmpty
+          ? null
+          : _medicationsController.text.trim(),
       sleepHoursAvg: num.tryParse(_sleepHoursController.text),
       activityLevel: _activityLevel,
       socialSupportLevel: _socialSupportLevel,
-      medicalBackground:
-          _medicalBackgroundController.text.trim().isEmpty ? null : _medicalBackgroundController.text.trim(),
+      medicalBackground: _medicalBackgroundController.text.trim().isEmpty
+          ? null
+          : _medicalBackgroundController.text.trim(),
     );
 
     setState(() => _isSaving = false);
@@ -85,11 +90,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(AppStrings.profileSaved)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text(AppStrings.profileSaved)));
       widget.onCompleted?.call();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessageAr ?? AppStrings.somethingWentWrong)),
+        SnackBar(
+            content:
+                Text(provider.errorMessageAr ?? AppStrings.somethingWentWrong)),
       );
     }
   }
@@ -104,7 +112,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     if (provider.errorMessageAr != null && provider.profile == null) {
       return Scaffold(
-        body: ErrorView(messageAr: provider.errorMessageAr!, onRetry: () => provider.load()),
+        body: ErrorView(
+            messageAr: provider.errorMessageAr!,
+            onRetry: () => provider.load()),
       );
     }
 
@@ -119,7 +129,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             const SizedBox(height: 8),
             Text(
               AppStrings.profileSetupTitle,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             const Text(
@@ -133,13 +146,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           TextField(
             controller: _diseaseDurationController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: AppStrings.diseaseDuration),
+            decoration:
+                const InputDecoration(labelText: AppStrings.diseaseDuration),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _medicationsController,
             maxLines: 2,
-            decoration: const InputDecoration(labelText: AppStrings.medications),
+            decoration:
+                const InputDecoration(labelText: AppStrings.medications),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -149,19 +164,23 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _activityLevel,
-            decoration: const InputDecoration(labelText: AppStrings.activityLevel),
+            initialValue: _activityLevel,
+            decoration:
+                const InputDecoration(labelText: AppStrings.activityLevel),
             items: AppStrings.activityLevels.entries
-                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                .map(
+                    (e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
                 .toList(),
             onChanged: (value) => setState(() => _activityLevel = value),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _socialSupportLevel,
-            decoration: const InputDecoration(labelText: AppStrings.socialSupport),
+            initialValue: _socialSupportLevel,
+            decoration:
+                const InputDecoration(labelText: AppStrings.socialSupport),
             items: AppStrings.socialSupportLevels.entries
-                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                .map(
+                    (e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
                 .toList(),
             onChanged: (value) => setState(() => _socialSupportLevel = value),
           ),
@@ -169,14 +188,18 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           TextField(
             controller: _medicalBackgroundController,
             maxLines: 3,
-            decoration: const InputDecoration(labelText: AppStrings.medicalBackground),
+            decoration:
+                const InputDecoration(labelText: AppStrings.medicalBackground),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _isSaving ? null : _save,
             child: _isSaving
                 ? const SizedBox(
-                    height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
                 : const Text(AppStrings.saveProfile),
           ),
           const SizedBox(height: 12),
@@ -207,22 +230,30 @@ class _ConditionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final myConditionIds = provider.profile?.conditions.map((c) => c.chronicCondition.id).toSet() ?? {};
-    final available = provider.allConditions.where((c) => !myConditionIds.contains(c.id)).toList();
+    final myConditionIds = provider.profile?.conditions
+            .map((c) => c.chronicCondition.id)
+            .toSet() ??
+        {};
+    final available = provider.allConditions
+        .where((c) => !myConditionIds.contains(c.id))
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(AppStrings.chronicConditionsLabel, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        const Text(AppStrings.chronicConditionsLabel,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final pc in provider.profile?.conditions ?? const <PatientCondition>[])
+            for (final pc
+                in provider.profile?.conditions ?? const <PatientCondition>[])
               Chip(
                 label: Text(pc.chronicCondition.nameAr),
-                onDeleted: () => provider.removeCondition(pc.chronicCondition.id),
+                onDeleted: () =>
+                    provider.removeCondition(pc.chronicCondition.id),
                 deleteIcon: const Icon(Icons.close, size: 18),
               ),
             if (available.isNotEmpty)
@@ -237,7 +268,8 @@ class _ConditionsSection extends StatelessWidget {
     );
   }
 
-  void _showAddConditionSheet(BuildContext context, List<ChronicCondition> available) {
+  void _showAddConditionSheet(
+      BuildContext context, List<ChronicCondition> available) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -247,12 +279,15 @@ class _ConditionsSection extends StatelessWidget {
             children: [
               const Padding(
                 padding: EdgeInsets.all(16),
-                child: Text(AppStrings.chronicConditionsLabel, style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(AppStrings.chronicConditionsLabel,
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               for (final condition in available)
                 ListTile(
                   title: Text(condition.nameAr),
-                  subtitle: condition.descriptionAr != null ? Text(condition.descriptionAr!) : null,
+                  subtitle: condition.descriptionAr != null
+                      ? Text(condition.descriptionAr!)
+                      : null,
                   onTap: () {
                     Navigator.of(context).pop();
                     provider.addCondition(condition.id);

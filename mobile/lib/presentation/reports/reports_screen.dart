@@ -43,8 +43,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
               if (provider.isLoading && provider.weeklyReport == null) {
                 return const LoadingView();
               }
-              if (provider.errorMessageAr != null && provider.weeklyReport == null) {
-                return ErrorView(messageAr: provider.errorMessageAr!, onRetry: () => provider.load());
+              if (provider.errorMessageAr != null &&
+                  provider.weeklyReport == null) {
+                return ErrorView(
+                    messageAr: provider.errorMessageAr!,
+                    onRetry: () => provider.load());
               }
 
               return ListView(
@@ -55,7 +58,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SectionHeader(
+                          const SectionHeader(
                             title: AppStrings.weeklyReport,
                             subtitle: "ملخص أسبوعي لحالتك النفسية",
                           ),
@@ -63,13 +66,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(AppSpacing.md),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryLight.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                              color:
+                                  AppColors.primaryLight.withValues(alpha: 0.5),
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusMd),
+                              border: Border.all(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.1)),
                             ),
                             child: Text(
                               provider.weeklyReport!.summaryAr,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
                                     height: 1.65,
                                     color: AppColors.textPrimary,
                                   ),
@@ -83,7 +93,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SectionHeader(
+                        const SectionHeader(
                           title: AppStrings.moodTrend,
                           subtitle: "مقياس 1 (منخفض) → 5 (مرتفع)",
                         ),
@@ -96,7 +106,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SectionHeader(
+                        const SectionHeader(
                           title: AppStrings.riskProgression,
                           subtitle: "تطور مستوى الخطر عبر الجلسات",
                         ),

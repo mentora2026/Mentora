@@ -17,7 +17,8 @@ class RiskProgressionChart extends StatelessWidget {
     if (points.isEmpty) {
       return const SizedBox(
         height: 180,
-        child: EmptyView(messageAr: AppStrings.noDataYet, icon: Icons.timeline_rounded),
+        child: EmptyView(
+            messageAr: AppStrings.noDataYet, icon: Icons.timeline_rounded),
       );
     }
 
@@ -32,7 +33,8 @@ class RiskProgressionChart extends StatelessWidget {
               toY: level.toDouble(),
               color: AppColors.riskColor(level),
               width: 16,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(6)),
               backDrawRodData: BackgroundBarChartRodData(
                 show: true,
                 toY: 5,
@@ -54,11 +56,14 @@ class RiskProgressionChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: 1,
-            getDrawingHorizontalLine: (value) => FlLine(color: AppColors.border, strokeWidth: 1),
+            getDrawingHorizontalLine: (value) =>
+                const FlLine(color: AppColors.border, strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -70,7 +75,10 @@ class RiskProgressionChart extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 4),
                     child: Text(
                       value.toInt().toString(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontSize: 11),
                     ),
                   );
                 },
@@ -80,15 +88,22 @@ class RiskProgressionChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 28,
-                interval: (points.length / 4).clamp(1, double.infinity).floorToDouble(),
+                interval: (points.length / 4)
+                    .clamp(1, double.infinity)
+                    .floorToDouble(),
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
-                  if (index < 0 || index >= points.length) return const SizedBox.shrink();
+                  if (index < 0 || index >= points.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       DateFormat("d/M").format(points[index].date),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontSize: 10),
                     ),
                   );
                 },
@@ -97,7 +112,7 @@ class RiskProgressionChart extends StatelessWidget {
           ),
           borderData: FlBorderData(
             show: true,
-            border: Border(
+            border: const Border(
               bottom: BorderSide(color: AppColors.border),
               left: BorderSide(color: AppColors.border),
             ),
@@ -110,7 +125,10 @@ class RiskProgressionChart extends StatelessWidget {
                 final label = AppStrings.riskLevelLabels[level] ?? "";
                 return BarTooltipItem(
                   "المستوى $level · $label",
-                  Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.white, fontSize: 12),
+                  Theme.of(context)
+                      .textTheme
+                      .bodySmall!
+                      .copyWith(color: Colors.white, fontSize: 12),
                 );
               },
             ),
