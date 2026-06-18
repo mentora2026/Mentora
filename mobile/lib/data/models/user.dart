@@ -1,3 +1,5 @@
+import 'json_parsing.dart';
+
 class AppUser {
   final String id;
   final String email;
@@ -72,7 +74,8 @@ class PatientCondition {
   factory PatientCondition.fromJson(Map<String, dynamic> json) {
     return PatientCondition(
       id: json["id"] as String,
-      chronicCondition: ChronicCondition.fromJson(json["chronic_condition"] as Map<String, dynamic>),
+      chronicCondition: ChronicCondition.fromJson(
+          json["chronic_condition"] as Map<String, dynamic>),
       diagnosedAt: json["diagnosed_at"] as String?,
       isPrimary: json["is_primary"] as bool,
     );
@@ -111,9 +114,9 @@ class PatientProfile {
       id: json["id"] as String,
       dateOfBirth: json["date_of_birth"] as String?,
       gender: json["gender"] as String?,
-      diseaseDurationMonths: json["disease_duration_months"] as num?,
+      diseaseDurationMonths: jsonNumOrNull(json["disease_duration_months"]),
       medications: json["medications"] as String?,
-      sleepHoursAvg: json["sleep_hours_avg"] as num?,
+      sleepHoursAvg: jsonNumOrNull(json["sleep_hours_avg"]),
       activityLevel: json["activity_level"] as String?,
       socialSupportLevel: json["social_support_level"] as String?,
       medicalBackground: json["medical_background"] as String?,

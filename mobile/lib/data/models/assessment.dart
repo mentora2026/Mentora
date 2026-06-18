@@ -1,3 +1,5 @@
+import 'json_parsing.dart';
+
 class MoodEntry {
   final String id;
   final int moodValue;
@@ -16,7 +18,7 @@ class MoodEntry {
   factory MoodEntry.fromJson(Map<String, dynamic> json) {
     return MoodEntry(
       id: json["id"] as String,
-      moodValue: json["mood_value"] as int,
+      moodValue: jsonInt(json["mood_value"], fallback: 3),
       noteAr: json["note_ar"] as String?,
       source: json["source"] as String,
       recordedAt: DateTime.parse(json["recorded_at"] as String),
@@ -33,7 +35,7 @@ class MoodTrendPoint {
   factory MoodTrendPoint.fromJson(Map<String, dynamic> json) {
     return MoodTrendPoint(
       date: DateTime.parse(json["date"] as String),
-      averageMood: (json["average_mood"] as num).toDouble(),
+      averageMood: jsonNum(json["average_mood"]).toDouble(),
     );
   }
 }
@@ -73,16 +75,16 @@ class RiskAssessment {
     return RiskAssessment(
       id: json["id"] as String,
       interviewSessionId: json["interview_session_id"] as String,
-      riskLevel: json["risk_level"] as int,
-      anxietyScore: json["anxiety_score"] as num,
-      stressScore: json["stress_score"] as num,
-      sadnessScore: json["sadness_score"] as num,
-      burnoutScore: json["burnout_score"] as num,
-      sleepQualityScore: json["sleep_quality_score"] as num,
-      adherenceScore: json["adherence_score"] as num,
-      compositeScore: json["composite_score"] as num,
+      riskLevel: jsonInt(json["risk_level"], fallback: 1),
+      anxietyScore: jsonNum(json["anxiety_score"]),
+      stressScore: jsonNum(json["stress_score"]),
+      sadnessScore: jsonNum(json["sadness_score"]),
+      burnoutScore: jsonNum(json["burnout_score"]),
+      sleepQualityScore: jsonNum(json["sleep_quality_score"]),
+      adherenceScore: jsonNum(json["adherence_score"]),
+      compositeScore: jsonNum(json["composite_score"]),
       explanationAr: json["explanation_ar"] as String,
-      explanationFactors: json["explanation_factors_json"] as Map<String, dynamic>,
+      explanationFactors: jsonMap(json["explanation_factors_json"]),
       createdAt: DateTime.parse(json["created_at"] as String),
     );
   }
@@ -93,13 +95,16 @@ class RiskProgressionPoint {
   final int riskLevel;
   final num compositeScore;
 
-  RiskProgressionPoint({required this.date, required this.riskLevel, required this.compositeScore});
+  RiskProgressionPoint(
+      {required this.date,
+      required this.riskLevel,
+      required this.compositeScore});
 
   factory RiskProgressionPoint.fromJson(Map<String, dynamic> json) {
     return RiskProgressionPoint(
       date: DateTime.parse(json["date"] as String),
-      riskLevel: json["risk_level"] as int,
-      compositeScore: json["composite_score"] as num,
+      riskLevel: jsonInt(json["risk_level"], fallback: 1),
+      compositeScore: jsonNum(json["composite_score"]),
     );
   }
 }
@@ -130,7 +135,7 @@ class ReportData {
       periodStart: json["period_start"] as String,
       periodEnd: json["period_end"] as String,
       summaryAr: json["summary_ar"] as String,
-      metrics: json["metrics_json"] as Map<String, dynamic>,
+      metrics: jsonMap(json["metrics_json"]),
       generatedAt: DateTime.parse(json["generated_at"] as String),
     );
   }
