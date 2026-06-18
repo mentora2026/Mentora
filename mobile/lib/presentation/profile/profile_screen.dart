@@ -5,7 +5,6 @@ import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../providers/auth_provider.dart';
-import '../auth/login_screen.dart';
 import '../onboarding/profile_setup_screen.dart';
 import '../shared/app_card.dart';
 import '../shared/section_header.dart';
@@ -34,13 +33,6 @@ class ProfileScreen extends StatelessWidget {
 
     final authProvider = context.read<AuthProvider>();
     await authProvider.logout();
-
-    if (context.mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-    }
   }
 
   @override

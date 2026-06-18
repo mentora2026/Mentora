@@ -6,6 +6,7 @@ import '../../core/navigation/app_messenger.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_scaffold.dart';
+import '../shared/auth_gate.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -49,6 +50,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success) {
       AppMessenger.showSuccess(AppStrings.loginSuccess);
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const AuthGate()),
+          (route) => false,
+        );
+      }
     }
   }
 
