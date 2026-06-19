@@ -17,6 +17,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    profiles:
+      - localdb
 
   backend:
     build: .
@@ -24,12 +26,16 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/psych_platform
+      # Use an externally provided DATABASE_URL if set (e.g. Supabase).
+      # Fallback to the local `db` service when running with the
+      # `--profile localdb` option:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:postgres@db:5432/psych_platform}
     ports:
       - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
+    # When using an external database (Supabase, RDS, etc.) set
+    # DATABASE_URL in `backend/.env` or in your environment before running.
+    # To run a local Postgres alongside the backend, start compose with:
+    #   docker compose --profile localdb up --build
     volumes:
       - .:/app
 

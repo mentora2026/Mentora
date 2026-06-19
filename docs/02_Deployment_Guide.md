@@ -108,6 +108,17 @@ for either platform:
 1. **Database**: provision a managed PostgreSQL instance. Copy its connection
    string into `DATABASE_URL` (format:
    `postgresql+psycopg2://user:pass@host:port/dbname`).
+   
+   If you use Supabase, it provides a PostgreSQL URL that typically starts
+   with `postgresql://`. For SQLAlchemy use (the backend here), prefer the
+   `postgresql+psycopg2://` scheme. Example transformation:
+
+   - Supabase raw URL: `postgresql://user:password@host:5432/postgres`
+   - SQLAlchemy-ready: `postgresql+psycopg2://user:password@host:5432/postgres`
+
+   Do NOT commit secrets to the repository. Instead create `backend/.env`
+   (copy from `.env.example`) and add your full `DATABASE_URL` there, or
+   export it in your shell before running the service.
 2. **Web service**: deploy the `backend/` directory using the provided
    `Dockerfile`. Set environment variables from `.env.example`, especially:
    - `SECRET_KEY` - generate a new strong value, never reuse the dev default.
