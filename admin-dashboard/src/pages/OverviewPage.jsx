@@ -68,10 +68,11 @@ export default function OverviewPage() {
             />
           </div>
 
-          <div className="rounded-lg border border-line bg-white p-6">
+          <div className="rounded-lg border border-line bg-white p-4 sm:p-6">
             <h2 className="font-display text-lg text-ink">توزيع مستويات الخطر</h2>
             <p className="mt-1 text-sm text-sage">عدد آخر التقييمات النفسية لكل مستوى خطر</p>
-            <div className="mt-6 h-72">
+            <div className="mt-6 overflow-x-auto">
+            <div className="h-72 min-w-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
                   <CartesianGrid stroke="#E8E4DC" vertical={false} />
@@ -98,7 +99,8 @@ export default function OverviewPage() {
                     ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+               </ResponsiveContainer>
+            </div>
             </div>
           </div>
         </div>

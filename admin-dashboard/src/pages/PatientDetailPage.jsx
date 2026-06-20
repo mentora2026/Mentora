@@ -52,17 +52,20 @@ export default function PatientDetailPage() {
     <AppShell title={detail ? detail.full_name : "ملف المريض"} description={detail ? detail.email : ""}>
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 inline-flex items-center gap-1 text-sm text-sage transition hover:text-teal"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-sage transition hover:text-teal"
       >
-        ← رجوع
+        <svg className="h-4 w-4 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        رجوع
       </button>
 
       {loading && <LoadingState />}
       {error && <ErrorState message={error} onRetry={load} />}
 
       {detail && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Profile summary */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {/* Profile summary sidebar */}
           <div className="space-y-4 lg:col-span-1">
             <div className="rounded-lg border border-line bg-white p-5">
               <h2 className="font-display text-lg text-ink">الحالة الحالية</h2>
@@ -73,7 +76,7 @@ export default function PatientDetailPage() {
 
             <div className="rounded-lg border border-line bg-white p-5">
               <h2 className="font-display text-lg text-ink">معلومات الملف الشخصي</h2>
-              <dl className="mt-3 space-y-2 text-sm">
+              <dl className="mt-3 space-y-2.5 text-sm">
                 <Row label="إعداد الملف" value={detail.onboarding_completed ? "مكتمل" : "غير مكتمل"} />
                 <Row
                   label="مستوى النشاط"
@@ -121,15 +124,16 @@ export default function PatientDetailPage() {
             </div>
           </div>
 
-          {/* History */}
-          <div className="space-y-6 lg:col-span-2">
+          {/* History main content */}
+          <div className="space-y-5 lg:col-span-2">
+            {/* Risk assessment history */}
             <div className="rounded-lg border border-line bg-white p-5">
               <h2 className="font-display text-lg text-ink">سجل التقييمات النفسية</h2>
               {detail.risk_history.length === 0 ? (
                 <EmptyState title="لا يوجد تقييمات نفسية بعد" />
               ) : (
-                <div className="mt-3 overflow-hidden rounded border border-line">
-                  <table className="w-full text-sm">
+                <div className="mt-3 overflow-x-auto rounded border border-line">
+                  <table className="w-full text-sm min-w-[360px]">
                     <thead>
                       <tr className="border-b border-line bg-paper/60 text-right text-xs text-sage">
                         <th className="px-4 py-2.5 font-medium">المستوى</th>
@@ -155,44 +159,77 @@ export default function PatientDetailPage() {
               )}
             </div>
 
+            {/* Interview sessions */}
             <div className="rounded-lg border border-line bg-white p-5">
               <h2 className="font-display text-lg text-ink">سجل جلسات المحادثة</h2>
               {detail.interview_sessions.length === 0 ? (
                 <EmptyState title="لا توجد جلسات محادثة بعد" />
               ) : (
-                <div className="mt-3 overflow-hidden rounded border border-line">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-line bg-paper/60 text-right text-xs text-sage">
-                        <th className="px-4 py-2.5 font-medium">التاريخ</th>
-                        <th className="px-4 py-2.5 font-medium">الحالة</th>
-                        <th className="px-4 py-2.5 font-medium">عدد الأسئلة</th>
-                        <th className="px-4 py-2.5 font-medium">مستوى الخطر</th>
-                        <th className="px-4 py-2.5 font-medium"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.interview_sessions.map((s) => (
-                        <tr key={s.id} className="border-b border-line last:border-0">
-                          <td className="px-4 py-2.5 tabular text-sage">{formatDateTime(s.started_at)}</td>
-                          <td className="px-4 py-2.5 text-ink">{SESSION_STATUS_LABELS[s.status] || s.status}</td>
-                          <td className="px-4 py-2.5 tabular text-ink">{s.total_questions_asked}</td>
-                          <td className="px-4 py-2.5">
-                            <RiskBadge level={s.risk_level} />
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <button
-                              onClick={() => navigate(`/interviews/${s.id}`)}
-                              className="rounded border border-line px-3 py-1 text-xs text-ink transition hover:border-teal hover:text-teal"
-                            >
-                              عرض المحادثة
-                            </button>
-                          </td>
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden sm:block mt-3 overflow-x-auto rounded border border-line">
+                    <table className="w-full text-sm min-w-[500px]">
+                      <thead>
+                        <tr className="border-b border-line bg-paper/60 text-right text-xs text-sage">
+                          <th className="px-4 py-2.5 font-medium">التاريخ</th>
+                          <th className="px-4 py-2.5 font-medium">الحالة</th>
+                          <th className="px-4 py-2.5 font-medium">عدد الأسئلة</th>
+                          <th className="px-4 py-2.5 font-medium">مستوى الخطر</th>
+                          <th className="px-4 py-2.5 font-medium"></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {detail.interview_sessions.map((s) => (
+                          <tr key={s.id} className="border-b border-line last:border-0">
+                            <td className="px-4 py-2.5 tabular text-sage">{formatDateTime(s.started_at)}</td>
+                            <td className="px-4 py-2.5 text-ink">{SESSION_STATUS_LABELS[s.status] || s.status}</td>
+                            <td className="px-4 py-2.5 tabular text-ink">{s.total_questions_asked}</td>
+                            <td className="px-4 py-2.5">
+                              <RiskBadge level={s.risk_level} />
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <button
+                                onClick={() => navigate(`/interviews/${s.id}`)}
+                                className="rounded border border-line px-3 py-1 text-xs text-ink transition hover:border-teal hover:text-teal"
+                              >
+                                عرض المحادثة
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile cards */}
+                  <div className="sm:hidden mt-3 space-y-2">
+                    {detail.interview_sessions.map((s) => (
+                      <div key={s.id} className="rounded-lg border border-line p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-sage">{formatDateTime(s.started_at)}</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <span className="text-sm text-ink">{SESSION_STATUS_LABELS[s.status] || s.status}</span>
+                              <span className="text-sage text-xs">·</span>
+                              <span className="text-xs text-sage">{s.total_questions_asked} سؤال</span>
+                            </div>
+                            {s.risk_level && (
+                              <div className="mt-1.5">
+                                <RiskBadge level={s.risk_level} />
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => navigate(`/interviews/${s.id}`)}
+                            className="shrink-0 rounded border border-line px-3 py-1.5 text-xs text-ink transition hover:border-teal hover:text-teal"
+                          >
+                            عرض
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -204,9 +241,9 @@ export default function PatientDetailPage() {
 
 function Row({ label, value }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <dt className="text-sage">{label}</dt>
-      <dd className="font-medium text-ink">{value}</dd>
+    <div className="flex items-start justify-between gap-4">
+      <dt className="text-sage shrink-0">{label}</dt>
+      <dd className="font-medium text-ink text-left">{value}</dd>
     </div>
   );
 }

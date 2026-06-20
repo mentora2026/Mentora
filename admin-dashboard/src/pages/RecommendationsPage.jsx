@@ -77,7 +77,7 @@ export default function RecommendationsPage() {
       <div className="mb-4 flex justify-end">
         <button
           onClick={() => setEditing({})}
-          className="rounded bg-teal px-4 py-2 text-sm font-medium text-paper transition hover:bg-teal-600"
+          className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-paper transition hover:bg-teal-600 active:bg-teal-700"
         >
           + توصية جديدة
         </button>

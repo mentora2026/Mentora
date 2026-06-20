@@ -41,34 +41,67 @@ export default function AuditLogsPage() {
           {logs.length === 0 ? (
             <EmptyState title="لا توجد سجلات تدقيق حتى الآن" />
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-line bg-paper/60 text-right text-xs text-sage">
-                  <th className="px-5 py-3 font-medium">الإجراء</th>
-                  <th className="px-5 py-3 font-medium">الجدول المستهدف</th>
-                  <th className="px-5 py-3 font-medium">المعرّف المستهدف</th>
-                  <th className="px-5 py-3 font-medium">التفاصيل</th>
-                  <th className="px-5 py-3 font-medium">التاريخ</th>
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-line bg-paper/60 text-right text-xs text-sage">
+                      <th className="px-5 py-3 font-medium">الإجراء</th>
+                      <th className="px-5 py-3 font-medium">الجدول المستهدف</th>
+                      <th className="px-5 py-3 font-medium">المعرّف المستهدف</th>
+                      <th className="px-5 py-3 font-medium">التفاصيل</th>
+                      <th className="px-5 py-3 font-medium">التاريخ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log) => (
+                      <tr key={log.id} className="border-b border-line last:border-0">
+                        <td className="px-5 py-3.5 font-medium text-ink">{ACTION_LABELS[log.action] || log.action}</td>
+                        <td className="px-5 py-3.5 tabular text-sage" dir="ltr">
+                          {log.target_table}
+                        </td>
+                        <td className="max-w-[160px] truncate px-5 py-3.5 tabular text-sage" dir="ltr">
+                          {log.target_id}
+                        </td>
+                        <td className="px-5 py-3.5 tabular text-xs text-sage max-w-[200px] truncate" dir="ltr">
+                          {log.metadata_json ? JSON.stringify(log.metadata_json) : "—"}
+                        </td>
+                        <td className="px-5 py-3.5 tabular text-sage">{formatDateTime(log.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-line">
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-line last:border-0">
-                    <td className="px-5 py-3.5 font-medium text-ink">{ACTION_LABELS[log.action] || log.action}</td>
-                    <td className="px-5 py-3.5 tabular text-sage" dir="ltr">
-                      {log.target_table}
-                    </td>
-                    <td className="max-w-[160px] truncate px-5 py-3.5 tabular text-sage" dir="ltr">
-                      {log.target_id}
-                    </td>
-                    <td className="px-5 py-3.5 tabular text-xs text-sage" dir="ltr">
-                      {log.metadata_json ? JSON.stringify(log.metadata_json) : "—"}
-                    </td>
-                    <td className="px-5 py-3.5 tabular text-sage">{formatDateTime(log.created_at)}</td>
-                  </tr>
+                  <div key={log.id} className="p-4">
+                    <p className="font-medium text-sm text-ink">{ACTION_LABELS[log.action] || log.action}</p>
+                    <div className="mt-2 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-sage shrink-0 pt-0.5">الجدول:</span>
+                        <span className="text-xs tabular text-ink" dir="ltr">{log.target_table}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-sage shrink-0 pt-0.5">المعرّف:</span>
+                        <span className="text-xs tabular text-ink truncate" dir="ltr">{log.target_id}</span>
+                      </div>
+                      {log.metadata_json && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs text-sage shrink-0 pt-0.5">التفاصيل:</span>
+                          <span className="text-xs tabular text-sage truncate" dir="ltr">
+                            {JSON.stringify(log.metadata_json)}
+                          </span>
+                        </div>
+                      )}
+                      <p className="text-xs text-sage/70 mt-1">{formatDateTime(log.created_at)}</p>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </div>
       )}
