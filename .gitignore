@@ -1,0 +1,16 @@
+# ── Environment files with secrets — NEVER commit ──
+.env
+.env.local
+.env.*.local
+
+# ── Python ──
+__pycache__/
+*.pyc
+venv/
+
+# ── Node ──
+node_modules/
+
+# ── IDE ──
+.vscode/
+.idea/

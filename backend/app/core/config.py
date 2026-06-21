@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     INTERVIEW_MIN_QUESTIONS: int = 5
     INTERVIEW_MAX_QUESTIONS: int = 15
 
+    # Admin seed
+    ADMIN_SEED_PASSWORD: str = "ChangeMe123!"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 

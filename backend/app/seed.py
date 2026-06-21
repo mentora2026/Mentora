@@ -10,6 +10,7 @@ Populates:
 Run with:  python -m app.seed
 """
 
+from app.core.config import settings
 from app.core.database import SessionLocal, engine
 from app.core.security import hash_password
 from app.models import (
@@ -270,7 +271,7 @@ def seed():
             db.add(
                 User(
                     email="admin@platform.example",
-                    password_hash=hash_password("ChangeMe123!"),
+                    password_hash=hash_password(settings.ADMIN_SEED_PASSWORD),
                     full_name="مسؤول النظام",
                     role=UserRole.admin,
                 )
