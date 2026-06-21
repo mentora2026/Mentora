@@ -42,15 +42,27 @@ SYSTEM_PROMPT_AR = (
 
 def _call_llm(user_prompt: str, max_tokens: int = 400) -> Optional[str]:
     """
-    Calls the configured LLM provider. Returns None on any failure so
-    callers can fall back to their template-based default.
+    Calls the configured LLM provider (Anthropic or Google Gemini).
+    Returns None on any failure so callers can fall back to their
+    template-based default.
     """
     if not settings.ENABLE_LLM or not settings.LLM_API_KEY:
         return None
 
-    if settings.LLM_PROVIDER != "anthropic":
+    provider = settings.LLM_PROVIDER.lower()
+
+    if provider == "anthropic":
+        return _call_anthropic(user_prompt, max_tokens)
+    elif provider == "gemini":
+        return _call_gemini(user_prompt, max_tokens)
+    elif provider in ("nvidia", "openai", "deepseek"):
+        return _call_openai_compatible(user_prompt, max_tokens)
+    else:
         return None
 
+
+def _call_anthropic(user_prompt: str, max_tokens: int) -> Optional[str]:
+    """Calls Anthropic Claude API."""
     try:
         response = httpx.post(
             "https://api.anthropic.com/v1/messages",
@@ -71,6 +83,79 @@ def _call_llm(user_prompt: str, max_tokens: int = 400) -> Optional[str]:
         data = response.json()
         text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
         text = "\n".join(text_blocks).strip()
+        return text or None
+    except Exception:
+        return None
+
+
+def _call_openai_compatible(user_prompt: str, max_tokens: int) -> Optional[str]:
+    """
+    Calls any OpenAI-compatible endpoint (NVIDIA NIM, DeepSeek, OpenAI, etc.).
+    Requires LLM_BASE_URL and LLM_API_KEY to be set in config.
+    """
+    base_url = settings.LLM_BASE_URL.rstrip("/")
+    url = f"{base_url}/chat/completions"
+    try:
+        response = httpx.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {settings.LLM_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": settings.LLM_MODEL,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT_AR},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "max_tokens": max_tokens,
+                "temperature": 0.7,
+            },
+            timeout=20.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+        choices = data.get("choices", [])
+        if not choices:
+            return None
+        text = choices[0].get("message", {}).get("content", "").strip()
+        return text or None
+    except Exception:
+        return None
+
+
+def _call_gemini(user_prompt: str, max_tokens: int) -> Optional[str]:
+    """Calls Google Gemini API via REST."""
+    model = settings.LLM_MODEL  # e.g. "gemini-1.5-flash" or "gemini-2.0-flash"
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
+        f":generateContent?key={settings.LLM_API_KEY}"
+    )
+    try:
+        response = httpx.post(
+            url,
+            headers={"content-type": "application/json"},
+            json={
+                "system_instruction": {
+                    "parts": [{"text": SYSTEM_PROMPT_AR}]
+                },
+                "contents": [
+                    {"parts": [{"text": user_prompt}]}
+                ],
+                "generationConfig": {
+                    "maxOutputTokens": max_tokens,
+                    "temperature": 0.7,
+                },
+            },
+            timeout=15.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+        candidates = data.get("candidates", [])
+        if not candidates:
+            return None
+        parts = candidates[0].get("content", {}).get("parts", [])
+        text = "\n".join(p.get("text", "") for p in parts).strip()
         return text or None
     except Exception:
         return None

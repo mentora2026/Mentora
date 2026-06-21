@@ -30,9 +30,10 @@ class Settings(BaseSettings):
 
     # AI / LLM Wrapper (Step 3) - used ONLY for rephrasing, summarization, and explanation text
     ENABLE_LLM: bool = False
-    LLM_PROVIDER: str = "anthropic"
+    LLM_PROVIDER: str = "nvidia"
+    LLM_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     LLM_API_KEY: str = ""
-    LLM_MODEL: str = "claude-sonnet-4-6"
+    LLM_MODEL: str = "deepseek-ai/deepseek-v4-pro"
 
     # Interview engine tuning
     INTERVIEW_MIN_QUESTIONS: int = 5
