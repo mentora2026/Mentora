@@ -54,7 +54,7 @@ class InterviewSession(Base):
     trigger_type = Column(PgEnum(TriggerType, name="trigger_type", create_type=True), nullable=False)
     total_questions_asked = Column(Integer, default=0)
     session_summary_ar = Column(Text, nullable=True)
-    risk_assessment_id = Column(UUID(as_uuid=True), ForeignKey("risk_assessments.id"), nullable=True)
+    risk_assessment_id = Column(UUID(as_uuid=True), ForeignKey("risk_assessments.id", name="fk_session_risk_assessment", use_alter=True), nullable=True)
 
     # context_state holds the Adaptive Interview Engine's working memory for this session
     # (covered categories, emotional indicator accumulators, etc.) - used heavily in Step 3.
