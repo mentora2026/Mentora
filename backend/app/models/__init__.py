@@ -11,6 +11,7 @@ from app.models.patient import (  # noqa: F401
     PatientProfile,
     ChronicCondition,
     PatientCondition,
+    Medication,
 )
 from app.models.interview import (  # noqa: F401
     InterviewQuestion,
@@ -47,4 +48,5 @@ __all__ = [
     "Report",
     "ContentLibraryItem",
     "AuditLog",
+    "Medication",
 ]

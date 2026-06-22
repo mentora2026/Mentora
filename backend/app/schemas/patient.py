@@ -18,6 +18,15 @@ class ChronicConditionOut(BaseModel):
     description_ar: Optional[str] = None
 
 
+class MedicationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name_en: str
+    name_ar: str
+    generic_name: Optional[str] = None
+
+
 class PatientConditionCreate(BaseModel):
     chronic_condition_id: uuid.UUID
     diagnosed_at: Optional[date] = None
@@ -37,11 +46,13 @@ class PatientProfileUpdate(BaseModel):
     date_of_birth: Optional[date] = None
     gender: Optional[Gender] = None
     disease_duration_months: Optional[Decimal] = None
-    medications: Optional[str] = None
+    medications: Optional[list[str]] = None
     sleep_hours_avg: Optional[Decimal] = None
     activity_level: Optional[ActivityLevel] = None
     social_support_level: Optional[SocialSupportLevel] = None
     medical_background: Optional[str] = None
+    height_cm: Optional[Decimal] = None
+    weight_kg: Optional[Decimal] = None
 
 
 class PatientProfileOut(BaseModel):
@@ -51,11 +62,13 @@ class PatientProfileOut(BaseModel):
     date_of_birth: Optional[date] = None
     gender: Optional[Gender] = None
     disease_duration_months: Optional[Decimal] = None
-    medications: Optional[str] = None
+    medications: Optional[list[str]] = None
     sleep_hours_avg: Optional[Decimal] = None
     activity_level: Optional[ActivityLevel] = None
     social_support_level: Optional[SocialSupportLevel] = None
     medical_background: Optional[str] = None
+    height_cm: Optional[Decimal] = None
+    weight_kg: Optional[Decimal] = None
     onboarding_completed: bool
     created_at: datetime
     conditions: list[PatientConditionOut] = []

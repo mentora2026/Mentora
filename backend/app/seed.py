@@ -19,6 +19,7 @@ from app.models import (
     InterviewQuestion,
     Recommendation,
     User,
+    Medication,
 )
 from app.models.enums import QuestionCategory, QuestionType, RecommendationCategory, UserRole
 
@@ -124,6 +125,19 @@ CONDITIONS = [
             },
         },
     },
+]
+
+MEDICATIONS = [
+    {"name_en": "Metformin", "name_ar": "ميتفورمين (جلوكوفاج)", "generic_name": "Metformin"},
+    {"name_en": "Insulin", "name_ar": "إنسولين", "generic_name": "Insulin"},
+    {"name_en": "Amlodipine", "name_ar": "أملوديبين", "generic_name": "Amlodipine"},
+    {"name_en": "Lisinopril", "name_ar": "ليسينوبريل", "generic_name": "Lisinopril"},
+    {"name_en": "Atorvastatin", "name_ar": "أتورفاستاتين (ليبيتور)", "generic_name": "Atorvastatin"},
+    {"name_en": "Albuterol", "name_ar": "ألبوتيرول (فنتولين)", "generic_name": "Albuterol / Salbutamol"},
+    {"name_en": "Levothyroxine", "name_ar": "ليفوثيروكسين", "generic_name": "Levothyroxine"},
+    {"name_en": "Aspirin", "name_ar": "أسبرين", "generic_name": "Acetylsalicylic acid"},
+    {"name_en": "Omeprazole", "name_ar": "أوميبرازول", "generic_name": "Omeprazole"},
+    {"name_en": "Losartan", "name_ar": "لوسارتان", "generic_name": "Losartan"},
 ]
 
 GENERIC_QUESTIONS = [
@@ -276,6 +290,11 @@ def seed():
                     role=UserRole.admin,
                 )
             )
+
+        # Medications
+        if db.query(Medication).count() == 0:
+            for m in MEDICATIONS:
+                db.add(Medication(**m))
 
         db.commit()
         print("Seed data inserted successfully.")

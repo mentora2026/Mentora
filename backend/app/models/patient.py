@@ -55,13 +55,15 @@ class PatientProfile(Base):
     date_of_birth = Column(Date, nullable=True)
     gender = Column(PgEnum(Gender, name="gender", create_type=True), nullable=True)
     disease_duration_months = Column(Numeric, nullable=True)
-    medications = Column(Text, nullable=True)
+    medications = Column(JSONB, nullable=True)  # List of strings
     sleep_hours_avg = Column(Numeric(3, 1), nullable=True)
     activity_level = Column(PgEnum(ActivityLevel, name="activity_level", create_type=True), nullable=True)
     social_support_level = Column(
         PgEnum(SocialSupportLevel, name="social_support_level", create_type=True), nullable=True
     )
     medical_background = Column(Text, nullable=True)
+    height_cm = Column(Numeric(5, 2), nullable=True)
+    weight_kg = Column(Numeric(5, 2), nullable=True)
     onboarding_completed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -106,3 +108,14 @@ class PatientCondition(Base):
 
     patient_profile = relationship("PatientProfile", back_populates="conditions")
     chronic_condition = relationship("ChronicCondition", back_populates="patient_links")
+
+
+class Medication(Base):
+    __tablename__ = "medications"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=gen_uuid)
+    name_en = Column(String(150), nullable=False)
+    name_ar = Column(String(150), nullable=False)
+    generic_name = Column(String(150), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

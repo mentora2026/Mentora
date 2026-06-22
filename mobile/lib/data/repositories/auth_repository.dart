@@ -35,8 +35,14 @@ class AuthRepository {
       ApiConstants.login,
       withAuth: false,
       body: {"email": email, "password": password},
-    );
     await _saveTokens(response as Map<String, dynamic>);
+  }
+
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+    await _client.post(
+      ApiConstants.changePassword,
+      body: {"current_password": currentPassword, "new_password": newPassword},
+    );
   }
 
   Future<void> logout() async {

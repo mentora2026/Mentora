@@ -18,6 +18,7 @@ class ApiConstants {
   static const String myProfile = "$baseUrl/patients/me";
   static const String myConditions = "$baseUrl/patients/me/conditions";
   static const String chronicConditions = "$baseUrl/conditions";
+  static const String medications = "$baseUrl/medications";
 
   // Adaptive interview
   static const String interviewStart = "$baseUrl/interviews/start";

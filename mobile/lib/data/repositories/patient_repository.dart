@@ -14,11 +14,13 @@ class PatientRepository {
     String? dateOfBirth,
     String? gender,
     num? diseaseDurationMonths,
-    String? medications,
+    List<String>? medications,
     num? sleepHoursAvg,
     String? activityLevel,
     String? socialSupportLevel,
     String? medicalBackground,
+    num? heightCm,
+    num? weightKg,
   }) async {
     final body = <String, dynamic>{};
     if (dateOfBirth != null) body["date_of_birth"] = dateOfBirth;
@@ -29,6 +31,8 @@ class PatientRepository {
     if (activityLevel != null) body["activity_level"] = activityLevel;
     if (socialSupportLevel != null) body["social_support_level"] = socialSupportLevel;
     if (medicalBackground != null) body["medical_background"] = medicalBackground;
+    if (heightCm != null) body["height_cm"] = heightCm;
+    if (weightKg != null) body["weight_kg"] = weightKg;
 
     final response = await _client.put(ApiConstants.myProfile, body: body);
     return PatientProfile.fromJson(response as Map<String, dynamic>);
@@ -37,6 +41,11 @@ class PatientRepository {
   Future<List<ChronicCondition>> listChronicConditions() async {
     final response = await _client.get(ApiConstants.chronicConditions);
     return (response as List<dynamic>).map((e) => ChronicCondition.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<Medication>> listMedications() async {
+    final response = await _client.get(ApiConstants.medications);
+    return (response as List<dynamic>).map((e) => Medication.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<List<PatientCondition>> listMyConditions() async {

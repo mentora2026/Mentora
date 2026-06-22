@@ -3,13 +3,14 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import get_current_patient_profile
 from app.core.database import get_db
-from app.models import ChronicCondition, PatientCondition, PatientProfile
+from app.models import ChronicCondition, PatientCondition, PatientProfile, Medication
 from app.schemas.patient import (
     ChronicConditionOut,
     PatientConditionCreate,
     PatientConditionOut,
     PatientProfileOut,
     PatientProfileUpdate,
+    MedicationOut,
 )
 
 router = APIRouter(tags=["Patient Profile"])
@@ -18,6 +19,11 @@ router = APIRouter(tags=["Patient Profile"])
 @router.get("/conditions", response_model=list[ChronicConditionOut])
 def list_chronic_conditions(db: Session = Depends(get_db)):
     return db.query(ChronicCondition).filter(ChronicCondition.is_active.is_(True)).all()
+
+
+@router.get("/medications", response_model=list[MedicationOut])
+def list_medications(db: Session = Depends(get_db)):
+    return db.query(Medication).filter(Medication.is_active.is_(True)).all()
 
 
 @router.get("/patients/me", response_model=PatientProfileOut)

@@ -58,6 +58,29 @@ class ChronicCondition {
   }
 }
 
+class Medication {
+  final String id;
+  final String nameEn;
+  final String nameAr;
+  final String? genericName;
+
+  Medication({
+    required this.id,
+    required this.nameEn,
+    required this.nameAr,
+    this.genericName,
+  });
+
+  factory Medication.fromJson(Map<String, dynamic> json) {
+    return Medication(
+      id: json["id"] as String,
+      nameEn: json["name_en"] as String,
+      nameAr: json["name_ar"] as String,
+      genericName: json["generic_name"] as String?,
+    );
+  }
+}
+
 class PatientCondition {
   final String id;
   final ChronicCondition chronicCondition;
@@ -87,11 +110,13 @@ class PatientProfile {
   final String? dateOfBirth;
   final String? gender;
   final num? diseaseDurationMonths;
-  final String? medications;
+  final List<String> medications;
   final num? sleepHoursAvg;
   final String? activityLevel;
   final String? socialSupportLevel;
   final String? medicalBackground;
+  final num? heightCm;
+  final num? weightKg;
   final bool onboardingCompleted;
   final List<PatientCondition> conditions;
 
@@ -100,11 +125,13 @@ class PatientProfile {
     this.dateOfBirth,
     this.gender,
     this.diseaseDurationMonths,
-    this.medications,
+    required this.medications,
     this.sleepHoursAvg,
     this.activityLevel,
     this.socialSupportLevel,
     this.medicalBackground,
+    this.heightCm,
+    this.weightKg,
     required this.onboardingCompleted,
     required this.conditions,
   });
@@ -115,11 +142,13 @@ class PatientProfile {
       dateOfBirth: json["date_of_birth"] as String?,
       gender: json["gender"] as String?,
       diseaseDurationMonths: jsonNumOrNull(json["disease_duration_months"]),
-      medications: json["medications"] as String?,
+      medications: (json["medications"] as List<dynamic>? ?? []).map((e) => e.toString()).toList(),
       sleepHoursAvg: jsonNumOrNull(json["sleep_hours_avg"]),
       activityLevel: json["activity_level"] as String?,
       socialSupportLevel: json["social_support_level"] as String?,
       medicalBackground: json["medical_background"] as String?,
+      heightCm: jsonNumOrNull(json["height_cm"]),
+      weightKg: jsonNumOrNull(json["weight_kg"]),
       onboardingCompleted: json["onboarding_completed"] as bool? ?? false,
       conditions: (json["conditions"] as List<dynamic>? ?? [])
           .map((e) => PatientCondition.fromJson(e as Map<String, dynamic>))
