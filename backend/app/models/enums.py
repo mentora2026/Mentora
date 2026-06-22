@@ -77,6 +77,7 @@ class RecommendationCategory(str, enum.Enum):
     motivational = "motivational"
     educational = "educational"
     professional_help = "professional_help"
+    direct_supervisor = "direct_supervisor"
 
 
 class NotificationType(str, enum.Enum):

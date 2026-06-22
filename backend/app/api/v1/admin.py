@@ -13,10 +13,14 @@ from app.models import (
     PatientCondition,
     PatientProfile,
     Recommendation,
+    PatientRecommendation,
     RiskAssessment,
     User,
+    UserDevice,
+    Notification,
 )
-from app.models.enums import SessionStatus
+from app.models.enums import SessionStatus, RecommendationCategory, NotificationType, NotificationStatus
+from app.core.firebase import send_push_notification
 from app.schemas.admin import (
     AdminAnalyticsOverview,
     AdminAnswerOut,
@@ -30,6 +34,7 @@ from app.schemas.admin import (
     AuditLogOut,
     RiskMonitoringEntry,
     UserStatusUpdate,
+    DirectRecommendationCreate,
 )
 from app.schemas.extras import (
     AdminRecommendationOut,
@@ -268,6 +273,58 @@ def deactivate_recommendation(recommendation_id: str, db: Session = Depends(get_
     db.add(rec)
     db.commit()
     return None
+
+
+@router.post("/patients/{patient_profile_id}/send-recommendation", response_model=AdminRecommendationOut, status_code=status.HTTP_201_CREATED)
+def send_direct_recommendation(patient_profile_id: str, payload: DirectRecommendationCreate, db: Session = Depends(get_db)):
+    profile = db.query(PatientProfile).filter(PatientProfile.id == patient_profile_id).first()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ملف المريض غير موجود")
+
+    # 1. Create the custom recommendation
+    rec = Recommendation(
+        category=RecommendationCategory.direct_supervisor,
+        title_ar=payload.title_ar,
+        content_ar=payload.content_ar,
+        applicable_risk_levels=[1, 2, 3, 4, 5],
+        is_active=True,
+    )
+    db.add(rec)
+    db.flush()  # to get rec.id
+
+    # 2. Link to patient
+    patient_rec = PatientRecommendation(
+        patient_profile_id=profile.id,
+        recommendation_id=rec.id,
+    )
+    db.add(patient_rec)
+
+    # 3. Create Notification in DB
+    notification = Notification(
+        user_id=profile.user_id,
+        type=NotificationType.recommendation_alert,
+        title_ar=payload.title_ar,
+        body_ar=payload.content_ar,
+    )
+    db.add(notification)
+    db.commit()
+    db.refresh(rec)
+
+    # 4. Send Push Notification
+    devices = db.query(UserDevice).filter(UserDevice.user_id == profile.user_id).all()
+    for device in devices:
+        send_push_notification(
+            token=device.fcm_token,
+            title=payload.title_ar,
+            body=payload.content_ar,
+            data={
+                "type": "recommendation_alert",
+                "patient_recommendation_id": str(patient_rec.id),
+                "click_action": "FLUTTER_NOTIFICATION_CLICK"
+            }
+        )
+
+    return rec
 
 
 # ----------------------------------------------------------------------

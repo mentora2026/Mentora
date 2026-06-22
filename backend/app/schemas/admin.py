@@ -146,3 +146,7 @@ class AdminInterviewDetail(BaseModel):
     conversation: list[ChatMessageOut] = []
     answers: list[AdminAnswerOut] = []
     risk_assessment: Optional[AdminRiskAssessmentDetail] = None
+
+class DirectRecommendationCreate(BaseModel):
+    title_ar: str
+    content_ar: str

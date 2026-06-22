@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Notification, User
+from app.models import Notification, User, UserDevice
 from app.schemas.extras import DeviceRegisterRequest, NotificationOut
 
 router = APIRouter(tags=["Notifications"])
@@ -46,12 +46,25 @@ def mark_notification_read(
 def register_device(
     payload: DeviceRegisterRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    """
-    Registers an FCM device token for push notifications.
-
-    NOTE (future step): persist the token (e.g., in a `user_devices` table)
-    and wire up the FCM sending service. For Step 2 this endpoint validates
-    the request shape and is ready for that integration.
-    """
+    # Check if token already exists
+    existing_device = db.query(UserDevice).filter(UserDevice.fcm_token == payload.fcm_token).first()
+    
+    if existing_device:
+        # If the token exists but belongs to a different user, update the user_id
+        if existing_device.user_id != current_user.id:
+            existing_device.user_id = current_user.id
+            db.add(existing_device)
+            db.commit()
+    else:
+        # Create a new device registration
+        new_device = UserDevice(
+            user_id=current_user.id,
+            fcm_token=payload.fcm_token,
+            device_type=payload.device_type,
+        )
+        db.add(new_device)
+        db.commit()
+        
     return None

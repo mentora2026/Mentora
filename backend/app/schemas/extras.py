@@ -83,6 +83,7 @@ class NotificationOut(BaseModel):
 
 class DeviceRegisterRequest(BaseModel):
     fcm_token: str
+    device_type: Optional[str] = None
 
 
 class ContentLibraryCreate(BaseModel):

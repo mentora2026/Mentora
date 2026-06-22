@@ -7,6 +7,7 @@ import '../notifications/notifications_screen.dart';
 import '../recommendations/recommendations_screen.dart';
 import '../reports/reports_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../core/services/notification_service.dart';
 
 /// Main app shell shown after login + onboarding, with bottom navigation
 /// across the core patient-facing sections.
@@ -18,6 +19,13 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize push notifications when user lands in the shell (logged in)
+    NotificationService().initialize();
+  }
+
   int _currentIndex = 0;
 
   final _screens = const [

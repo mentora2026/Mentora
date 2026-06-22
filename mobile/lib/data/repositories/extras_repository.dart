@@ -34,7 +34,13 @@ class NotificationRepository {
     await _client.post(ApiConstants.notificationRead(notificationId));
   }
 
-  Future<void> registerDevice(String fcmToken) async {
-    await _client.post(ApiConstants.deviceRegister, body: {"fcm_token": fcmToken});
+  Future<void> registerDevice(String fcmToken, {String? deviceType}) async {
+    await _client.post(
+      ApiConstants.deviceRegister,
+      body: {
+        "fcm_token": fcmToken,
+        if (deviceType != null) "device_type": deviceType,
+      },
+    );
   }
 }

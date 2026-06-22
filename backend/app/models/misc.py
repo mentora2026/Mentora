@@ -121,6 +121,19 @@ class Notification(Base):
     user = relationship("User", back_populates="notifications")
 
 
+class UserDevice(Base):
+    __tablename__ = "user_devices"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=gen_uuid)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    fcm_token = Column(String(500), nullable=False, unique=True)
+    device_type = Column(String(50), nullable=True)  # e.g., 'android', 'ios', 'web'
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    user = relationship("User")
+
+
 class Report(Base):
     __tablename__ = "reports"
 

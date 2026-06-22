@@ -102,8 +102,11 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api/v1")
 
 
+from app.core.firebase import initialize_firebase
+
 @app.on_event("startup")
-def seed_on_startup() -> None:
+def startup_events() -> None:
+    initialize_firebase()
     if settings.SEED_ON_STARTUP:
         seed()
 

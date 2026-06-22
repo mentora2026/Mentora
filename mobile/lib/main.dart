@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+
 import 'core/localization/app_strings.dart';
 import 'core/navigation/app_messenger.dart';
 import 'core/theme/app_theme.dart';
@@ -15,7 +17,9 @@ import 'providers/profile_provider.dart';
 import 'providers/recommendation_provider.dart';
 import 'providers/reports_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const PsychSupportApp());
 }
 

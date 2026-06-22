@@ -28,6 +28,7 @@ from app.models.misc import (  # noqa: F401
     Report,
     ContentLibraryItem,
     AuditLog,
+    UserDevice,
 )
 
 __all__ = [
@@ -49,4 +50,5 @@ __all__ = [
     "ContentLibraryItem",
     "AuditLog",
     "Medication",
+    "UserDevice",
 ]

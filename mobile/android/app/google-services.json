@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "533254755716",
+    "project_id": "mentora-17bdc",
+    "storage_bucket": "mentora-17bdc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533254755716:android:c703c1cc8f6cfb66c9f9d1",
+        "android_client_info": {
+          "package_name": "com.example.psych_support_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDL0-ZrIpJh140QsHA_nBMNeNj79ya0RY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
