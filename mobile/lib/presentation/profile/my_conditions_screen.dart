@@ -5,7 +5,6 @@ import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../data/models/user.dart';
 import '../../providers/profile_provider.dart';
-import '../shared/app_card.dart';
 
 class MyConditionsScreen extends StatelessWidget {
   const MyConditionsScreen({super.key});

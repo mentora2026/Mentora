@@ -35,6 +35,7 @@ class AuthRepository {
       ApiConstants.login,
       withAuth: false,
       body: {"email": email, "password": password},
+    );
     await _saveTokens(response as Map<String, dynamic>);
   }
 

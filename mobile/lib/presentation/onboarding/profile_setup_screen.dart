@@ -199,7 +199,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _gender,
+                  initialValue: _gender,
                   decoration: const InputDecoration(labelText: 'الجنس'),
                   items: const [
                     DropdownMenuItem(value: 'male', child: Text('ذكر')),
@@ -264,14 +264,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _activityLevel,
+            initialValue: _activityLevel,
             decoration: const InputDecoration(labelText: AppStrings.activityLevel),
             items: AppStrings.activityLevels.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
             onChanged: (value) => setState(() => _activityLevel = value),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _socialSupportLevel,
+            initialValue: _socialSupportLevel,
             decoration: const InputDecoration(labelText: AppStrings.socialSupport),
             items: AppStrings.socialSupportLevels.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
             onChanged: (value) => setState(() => _socialSupportLevel = value),
