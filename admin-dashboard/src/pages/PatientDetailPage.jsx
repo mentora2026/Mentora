@@ -28,6 +28,14 @@ export default function PatientDetailPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Send Recommendation Modal State
+  const [showRecModal, setShowRecModal] = useState(false);
+  const [recTitle, setRecTitle] = useState("");
+  const [recContent, setRecContent] = useState("");
+  const [recSending, setRecSending] = useState(false);
+  const [recError, setRecError] = useState(null);
+  const [recSuccess, setRecSuccess] = useState(false);
+
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -46,19 +54,55 @@ export default function PatientDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  const handleSendRec = async (e) => {
+    e.preventDefault();
+    setRecSending(true);
+    setRecError(null);
+    setRecSuccess(false);
+
+    try {
+      await api.post(ENDPOINTS.sendDirectRecommendation(detail.patient_profile_id), {
+        title_ar: recTitle,
+        content_ar: recContent,
+      });
+      setRecSuccess(true);
+      setTimeout(() => {
+        setShowRecModal(false);
+        setRecTitle("");
+        setRecContent("");
+        setRecSuccess(false);
+      }, 2000);
+    } catch (err) {
+      setRecError(err.messageAr);
+    } finally {
+      setRecSending(false);
+    }
+  };
+
   const latestRiskLevel = detail?.risk_history?.[0]?.risk_level ?? null;
 
   return (
     <AppShell title={detail ? detail.full_name : "ملف المريض"} description={detail ? detail.email : ""}>
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-sage transition hover:text-teal"
-      >
-        <svg className="h-4 w-4 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        رجوع
-      </button>
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-sm text-sage transition hover:text-teal"
+        >
+          <svg className="h-4 w-4 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          رجوع
+        </button>
+
+        {detail && (
+          <button
+            onClick={() => setShowRecModal(true)}
+            className="rounded-md bg-teal px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-600 shadow-sm"
+          >
+            إرسال توصية مباشرة
+          </button>
+        )}
+      </div>
 
       {loading && <LoadingState />}
       {error && <ErrorState message={error} onRetry={load} />}
@@ -232,6 +276,80 @@ export default function PatientDetailPage() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Recommendation Modal */}
+      {showRecModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-line bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-lg text-ink">إرسال توصية مباشرة للمريض</h3>
+              <button
+                onClick={() => {
+                  setShowRecModal(false);
+                  setRecSuccess(false);
+                  setRecError(null);
+                }}
+                className="text-sage hover:text-ink transition"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            {recSuccess ? (
+              <div className="rounded-lg bg-teal-50 p-4 text-center">
+                <p className="font-medium text-teal">تم إرسال التوصية بنجاح!</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSendRec} className="space-y-4">
+                {recError && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-600">{recError}</div>}
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-ink">عنوان التوصية</label>
+                  <input
+                    type="text"
+                    required
+                    value={recTitle}
+                    onChange={(e) => setRecTitle(e.target.value)}
+                    className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-teal"
+                    placeholder="مثال: تعليمات جديدة للطوارئ"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-ink">المحتوى</label>
+                  <textarea
+                    required
+                    rows="4"
+                    value={recContent}
+                    onChange={(e) => setRecContent(e.target.value)}
+                    className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-teal"
+                    placeholder="اكتب التوصية أو الرسالة الموجهة للمريض هنا..."
+                  ></textarea>
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowRecModal(false)}
+                    className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-paper"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={recSending || !recTitle.trim() || !recContent.trim()}
+                    className="rounded-md bg-teal px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-600 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {recSending && (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    )}
+                    إرسال للمريض
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

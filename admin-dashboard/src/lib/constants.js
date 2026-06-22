@@ -13,6 +13,7 @@ export const ENDPOINTS = {
   adminUsers: `${API_BASE_URL}/admin/users`,
   adminUserStatus: (id) => `${API_BASE_URL}/admin/users/${id}/status`,
   adminPatientDetail: (userId) => `${API_BASE_URL}/admin/users/${userId}/patient-detail`,
+  sendDirectRecommendation: (patientProfileId) => `${API_BASE_URL}/admin/patients/${patientProfileId}/send-recommendation`,
 
   riskMonitoring: `${API_BASE_URL}/admin/risk-monitoring`,
   adminInterviewSession: (id) => `${API_BASE_URL}/admin/interviews/${id}`,
