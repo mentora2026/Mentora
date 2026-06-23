@@ -22,6 +22,8 @@ class Settings(BaseSettings):
 
     # Firebase Cloud Messaging
     FCM_SERVER_KEY: str = ""
+    FIREBASE_CREDENTIALS_PATH: str | None = None
+    FIREBASE_CREDENTIALS_JSON: str | None = None
 
     # AI / NLP - Sentiment Analysis (Step 3)
     HF_SENTIMENT_MODEL: str = "CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment"

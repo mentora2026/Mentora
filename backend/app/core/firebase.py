@@ -2,15 +2,22 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 from app.core.config import settings
 
+import json
+
 def initialize_firebase():
     if not firebase_admin._apps:
         try:
-            if settings.FIREBASE_CREDENTIALS_PATH:
+            if settings.FIREBASE_CREDENTIALS_JSON:
+                cred_dict = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
+                cred = credentials.Certificate(cred_dict)
+                firebase_admin.initialize_app(cred)
+                print("Firebase Admin SDK initialized successfully from JSON string.")
+            elif settings.FIREBASE_CREDENTIALS_PATH:
                 cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
                 firebase_admin.initialize_app(cred)
-                print("Firebase Admin SDK initialized successfully.")
+                print("Firebase Admin SDK initialized successfully from file path.")
             else:
-                print("FIREBASE_CREDENTIALS_PATH not set. Firebase not initialized.")
+                print("FIREBASE_CREDENTIALS_PATH or JSON not set. Firebase not initialized.")
         except Exception as e:
             print(f"Error initializing Firebase Admin SDK: {e}")
 
