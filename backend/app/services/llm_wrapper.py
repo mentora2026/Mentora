@@ -55,7 +55,7 @@ def _call_llm(user_prompt: str, max_tokens: int = 400) -> Optional[str]:
         return _call_anthropic(user_prompt, max_tokens)
     elif provider == "gemini":
         return _call_gemini(user_prompt, max_tokens)
-    elif provider in ("nvidia", "openai", "deepseek"):
+    elif provider in ("nvidia", "openai", "deepseek", "openrouter"):
         return _call_openai_compatible(user_prompt, max_tokens)
     else:
         return None
