@@ -8,7 +8,12 @@ def initialize_firebase():
     if not firebase_admin._apps:
         try:
             if settings.FIREBASE_CREDENTIALS_JSON:
-                cred_dict = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
+                json_str = settings.FIREBASE_CREDENTIALS_JSON
+                # Render might escape newlines, so we replace literal '\n' with actual newlines if needed
+                if "\\n" in json_str and "\n" not in json_str:
+                    json_str = json_str.replace("\\n", "\n")
+                
+                cred_dict = json.loads(json_str)
                 cred = credentials.Certificate(cred_dict)
                 firebase_admin.initialize_app(cred)
                 print("Firebase Admin SDK initialized successfully from JSON string.")
