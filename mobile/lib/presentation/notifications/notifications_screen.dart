@@ -8,6 +8,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../data/models/extras.dart';
 import '../../providers/notification_provider.dart';
 import '../shared/app_card.dart';
+import '../shared/main_shell.dart';
 import '../shared/state_views.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -33,7 +34,38 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         provider.notifications.where((item) => !item.isRead).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.notifications)),
+      appBar: AppBar(
+        title: const Text(AppStrings.notifications),
+        actions: [
+          if (provider.notifications.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_rounded),
+              tooltip: "مسح جميع الإشعارات",
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text("مسح جميع الإشعارات"),
+                    content: const Text("هل أنت متأكد من رغبتك في تنظيف سجل الإشعارات بالكامل؟"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text("إلغاء"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          provider.clearAll();
+                        },
+                        child: const Text("مسح", style: TextStyle(color: AppColors.risk5)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => provider.load(),
@@ -159,7 +191,12 @@ class _NotificationTile extends StatelessWidget {
     final isUnread = !notification.isRead;
 
     return AppCard(
-      onTap: () => context.read<NotificationProvider>().markRead(notification),
+      onTap: () {
+        context.read<NotificationProvider>().markRead(notification);
+        if (notification.type == 'recommendation_alert') {
+          MainShell.switchTab(1);
+        }
+      },
       color: isUnread
           ? AppColors.primaryLight.withValues(alpha: 0.55)
           : AppColors.surface,
@@ -227,6 +264,14 @@ class _NotificationTile extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.textTertiary, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              context.read<NotificationProvider>().deleteNotification(notification.id);
+            },
           ),
         ],
       ),

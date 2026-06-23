@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/localization/app_strings.dart';
@@ -138,15 +139,49 @@ class _RecommendationCardState extends State<_RecommendationCard> {
                           .titleMedium
                           ?.copyWith(fontSize: 15),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('d/M HH:mm').format(rec.deliveredAt),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                    ),
                   ],
                 ),
               ),
-              AnimatedRotation(
-                turns: _expanded ? 0.5 : 0,
-                duration: const Duration(milliseconds: 200),
-                child: const Icon(Icons.expand_more_rounded,
-                    color: AppColors.textTertiary),
-              ),
+              if (_expanded)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, color: AppColors.risk5),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text("حذف التوصية"),
+                        content: const Text("هل أنت متأكد من رغبتتك في حذف هذه التوصية بشكل نهائي؟"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text("إلغاء"),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              context.read<RecommendationProvider>().deleteRecommendation(rec.id);
+                            },
+                            child: const Text("حذف", style: TextStyle(color: AppColors.risk5)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                )
+              else
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.expand_more_rounded,
+                      color: AppColors.textTertiary),
+                ),
             ],
           ),
           if (_expanded) ...[

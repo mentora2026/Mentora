@@ -48,4 +48,26 @@ class NotificationProvider extends ChangeNotifier {
       // Non-critical.
     }
   }
+
+  Future<void> deleteNotification(String id) async {
+    try {
+      await _repository.deleteNotification(id);
+      notifications.removeWhere((n) => n.id == id);
+      notifyListeners();
+    } catch (e) {
+      errorMessageAr = "فشل حذف الإشعار: ${e.toString()}";
+      notifyListeners();
+    }
+  }
+
+  Future<void> clearAll() async {
+    try {
+      await _repository.clearAllNotifications();
+      notifications.clear();
+      notifyListeners();
+    } catch (e) {
+      errorMessageAr = "فشل مسح الإشعارات: ${e.toString()}";
+      notifyListeners();
+    }
+  }
 }

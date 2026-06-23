@@ -39,10 +39,13 @@ class ApiConstants {
   static const String myRecommendations = "$baseUrl/recommendations/me";
   static String recommendationViewed(String id) => "$baseUrl/recommendations/$id/viewed";
   static String recommendationFeedback(String id) => "$baseUrl/recommendations/$id/feedback";
+  static String deleteRecommendation(String id) => "$baseUrl/recommendations/$id";
 
   // Notifications
   static const String notifications = "$baseUrl/notifications";
   static String notificationRead(String id) => "$baseUrl/notifications/$id/read";
+  static String deleteNotification(String id) => "$baseUrl/notifications/$id";
+  static const String clearAllNotifications = "$baseUrl/notifications/all";
   static const String deviceRegister = "$baseUrl/devices/register";
 
   // Reports

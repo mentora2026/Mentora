@@ -50,6 +50,18 @@ def submit_recommendation_feedback(
     return None
 
 
+@router.delete("/{patient_recommendation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_recommendation(
+    patient_recommendation_id: str,
+    profile: PatientProfile = Depends(get_current_patient_profile),
+    db: Session = Depends(get_db),
+):
+    pr = _get_owned(db, patient_recommendation_id, profile)
+    db.delete(pr)
+    db.commit()
+    return None
+
+
 def _get_owned(db: Session, patient_recommendation_id: str, profile: PatientProfile) -> PatientRecommendation:
     pr = (
         db.query(PatientRecommendation)

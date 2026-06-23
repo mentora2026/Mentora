@@ -9,10 +9,16 @@ import '../reports/reports_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../core/services/notification_service.dart';
 
+final GlobalKey<_MainShellState> mainShellKey = GlobalKey<_MainShellState>();
+
 /// Main app shell shown after login + onboarding, with bottom navigation
 /// across the core patient-facing sections.
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  MainShell({Key? key}) : super(key: key ?? mainShellKey);
+
+  static void switchTab(int index) {
+    mainShellKey.currentState?.switchToTab(index);
+  }
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -27,6 +33,12 @@ class _MainShellState extends State<MainShell> {
   }
 
   int _currentIndex = 0;
+
+  void switchToTab(int index) {
+    if (mounted) {
+      setState(() => _currentIndex = index);
+    }
+  }
 
   final _screens = const [
     HomeScreen(),

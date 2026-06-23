@@ -64,4 +64,15 @@ class RecommendationProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> deleteRecommendation(String id) async {
+    try {
+      await _repository.deleteRecommendation(id);
+      recommendations.removeWhere((r) => r.id == id);
+      notifyListeners();
+    } catch (e) {
+      errorMessageAr = "فشل حذف التوصية: ${e.toString()}";
+      notifyListeners();
+    }
+  }
 }

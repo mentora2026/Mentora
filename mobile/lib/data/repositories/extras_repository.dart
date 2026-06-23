@@ -20,6 +20,10 @@ class RecommendationRepository {
       body: {"is_helpful": isHelpful},
     );
   }
+
+  Future<void> deleteRecommendation(String patientRecommendationId) async {
+    await _client.delete(ApiConstants.deleteRecommendation(patientRecommendationId));
+  }
 }
 
 class NotificationRepository {
@@ -32,6 +36,14 @@ class NotificationRepository {
 
   Future<void> markRead(String notificationId) async {
     await _client.post(ApiConstants.notificationRead(notificationId));
+  }
+
+  Future<void> deleteNotification(String notificationId) async {
+    await _client.delete(ApiConstants.deleteNotification(notificationId));
+  }
+
+  Future<void> clearAllNotifications() async {
+    await _client.delete(ApiConstants.clearAllNotifications);
   }
 
   Future<void> registerDevice(String fcmToken, {String? deviceType}) async {
