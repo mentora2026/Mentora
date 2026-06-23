@@ -269,3 +269,35 @@ def explain_recommendation_ar(recommendation_title_ar: str, recommendation_conte
     )
     explanation = _call_llm(prompt, max_tokens=100)
     return explanation or fallback
+
+
+# ---------------------------------------------------------------------------
+# AI Personalized Recommendation
+# ---------------------------------------------------------------------------
+def generate_ai_recommendation_ar(qa_pairs: list[tuple[str, str]], dominant_emotions: list[str], risk_level: int) -> Optional[str]:
+    """
+    Generates a personalized, non-diagnostic behavioral or lifestyle recommendation 
+    in Arabic based on the patient's answers and state during the session.
+    It mentions general psychological/CBT principles as the source to provide credibility.
+    """
+    if not qa_pairs:
+        return None
+
+    qa_text = "\n".join(f"- س: {q}\n  ج: {a}" for q, a in qa_pairs if a)
+    emotions_text = "، ".join(dominant_emotions) if dominant_emotions else "محايدة"
+
+    prompt = (
+        "بناءً على تفاصيل الجلسة التفاعلية أدناه لمريض أمراض مزمنة، اكتب نصيحة عملية ومخصصة "
+        "واحدة باللغة العربية الفصحى. يجب أن تكون النصيحة داعمة ومبنية على مبادئ العلاج "
+        "المعرفي السلوكي (CBT) أو إرشادات الرعاية الذاتية العامة. \n"
+        "شروط هامة:\n"
+        "1. يجب ألا تتجاوز التوصية فقرة واحدة (3-4 أسطر).\n"
+        "2. اذكر بلطف أن هذه التوصية مستمدة من 'مبادئ العلاج المعرفي السلوكي' أو 'أفضل ممارسات الدعم النفسي'.\n"
+        "3. يمنع منعاً باتاً ذكر أي تشخيص طبي أو وصفة طبية.\n"
+        f"\nالمشاعر الغالبة: {emotions_text}\n"
+        f"مستوى الخطر النفسي (1-5 حيث 5 هو الأعلى): {risk_level}\n\n"
+        f"مجريات المحادثة:\n{qa_text}"
+    )
+    
+    recommendation = _call_llm(prompt, max_tokens=400)
+    return recommendation

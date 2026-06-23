@@ -35,7 +35,7 @@ from app.models import (
 )
 from app.models.enums import ChatSender, NotificationType, QuestionCategory, SessionStatus, UserRole
 from app.services.crisis_detection import contains_crisis_language
-from app.services.llm_wrapper import generate_session_summary_ar, rephrase_question_ar
+from app.services.llm_wrapper import generate_session_summary_ar, rephrase_question_ar, generate_ai_recommendation_ar
 from app.services.sentiment_engine import sentiment_engine
 
 # Default category exploration order when no disease-specific priority is configured.
@@ -441,6 +441,50 @@ class InterviewEngine:
 
         # Recommendation Engine
         select_recommendations(self.db, profile, risk_assessment)
+
+        # AI Personalized Recommendation (Step 3 LLM usage)
+        ai_recommendation_text = generate_ai_recommendation_ar(qa_pairs, dominant_emotions, risk_assessment.risk_level)
+        if ai_recommendation_text:
+            from app.models import Recommendation, PatientRecommendation
+            from app.models.enums import RecommendationCategory
+            
+            ai_rec = Recommendation(
+                category=RecommendationCategory.ai_personalized,
+                title_ar="توصية مخصصة من المساعد الذكي",
+                content_ar=ai_recommendation_text,
+                applicable_risk_levels=[1, 2, 3, 4, 5],
+                is_active=True,
+            )
+            self.db.add(ai_rec)
+            self.db.flush()
+            
+            p_rec = PatientRecommendation(
+                patient_profile_id=profile.id,
+                recommendation_id=ai_rec.id,
+                risk_assessment_id=risk_assessment.id,
+            )
+            self.db.add(p_rec)
+            
+            # Create a notification for the patient about the AI recommendation
+            ai_notif = Notification(
+                user_id=profile.user_id,
+                type=NotificationType.recommendation_alert,
+                title_ar="توصية مخصصة جديدة",
+                body_ar="بناءً على محادثتك الأخيرة، قمنا بتجهيز توصية مخصصة لك.",
+            )
+            self.db.add(ai_notif)
+            self.db.commit()
+            
+            # Send Push Notification
+            from app.core.firebase import send_push_notification
+            from app.models import UserDevice
+            devices = self.db.query(UserDevice).filter(UserDevice.user_id == profile.user_id).all()
+            for device in devices:
+                send_push_notification(
+                    token=device.fcm_token,
+                    title="توصية مخصصة جديدة",
+                    body="بناءً على محادثتك الأخيرة، قمنا بتجهيز توصية مخصصة لك.",
+                )
 
         # Admin alert on crisis / Level 5 (Step 1 Section 7.5 / 9.2)
         if crisis_detected or risk_assessment.risk_level == 5:
