@@ -84,7 +84,9 @@ def _call_anthropic(user_prompt: str, max_tokens: int) -> Optional[str]:
         text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
         text = "\n".join(text_blocks).strip()
         return text or None
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Anthropic API Error: {e}")
         return None
 
 
@@ -120,7 +122,9 @@ def _call_openai_compatible(user_prompt: str, max_tokens: int) -> Optional[str]:
             return None
         text = choices[0].get("message", {}).get("content", "").strip()
         return text or None
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"OpenAI Compatible API Error: {e}")
         return None
 
 
@@ -157,7 +161,9 @@ def _call_gemini(user_prompt: str, max_tokens: int) -> Optional[str]:
         parts = candidates[0].get("content", {}).get("parts", [])
         text = "\n".join(p.get("text", "") for p in parts).strip()
         return text or None
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Gemini API Error: {e}")
         return None
 
 
@@ -300,4 +306,8 @@ def generate_ai_recommendation_ar(qa_pairs: list[tuple[str, str]], dominant_emot
     )
     
     recommendation = _call_llm(prompt, max_tokens=400)
+    
+    if not recommendation:
+        return "بناءً على المعطيات العامة، نوصيك بتخصيص وقت يومي للاسترخاء وممارسة هواياتك المفضلة كجزء من الرعاية الذاتية المستمدة من مبادئ العلاج السلوكي."
+        
     return recommendation
