@@ -9,7 +9,7 @@ import '../reports/reports_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../core/services/notification_service.dart';
 
-final GlobalKey<_MainShellState> mainShellKey = GlobalKey<_MainShellState>();
+final GlobalKey<MainShellState> mainShellKey = GlobalKey<MainShellState>();
 
 /// Main app shell shown after login + onboarding, with bottom navigation
 /// across the core patient-facing sections.
@@ -21,10 +21,10 @@ class MainShell extends StatefulWidget {
   }
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();

@@ -75,7 +75,7 @@ class _OnboardingGateState extends State<_OnboardingGate> {
       );
     }
 
-    return const MainShell();
+    return MainShell();
   }
 }
 
