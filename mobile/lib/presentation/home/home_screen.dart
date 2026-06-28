@@ -11,6 +11,7 @@ import '../chat/chat_screen.dart';
 import '../mood/mood_tracker_screen.dart';
 import '../recommendations/recommendations_screen.dart';
 import '../reports/reports_screen.dart';
+import '../content/content_screen.dart';
 import '../shared/app_card.dart';
 import '../shared/risk_badge.dart';
 import '../shared/risk_gauge.dart';
@@ -213,7 +214,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  const Expanded(child: SizedBox()),
+                  Expanded(
+                    child: _CompactAction(
+                      icon: Icons.menu_book_rounded,
+                      label: AppStrings.contentLibrary,
+                      color: AppColors.primary,
+                      background: AppColors.primaryLight,
+                      onTap: () => _openScreen(const ContentScreen()),
+                    ),
+                  ),
                 ],
               ),
 

@@ -81,3 +81,32 @@ class AppNotification {
     );
   }
 }
+
+class ContentLibraryItem {
+  final String id;
+  final String contentType;
+  final String key;
+  final String? titleAr;
+  final String bodyAr;
+  final bool isPublished;
+
+  ContentLibraryItem({
+    required this.id,
+    required this.contentType,
+    required this.key,
+    this.titleAr,
+    required this.bodyAr,
+    required this.isPublished,
+  });
+
+  factory ContentLibraryItem.fromJson(Map<String, dynamic> json) {
+    return ContentLibraryItem(
+      id: json["id"] as String,
+      contentType: json["content_type"] as String,
+      key: json["key"] as String,
+      titleAr: json["title_ar"] as String?,
+      bodyAr: json["body_ar"] as String,
+      isPublished: json["is_published"] as bool,
+    );
+  }
+}

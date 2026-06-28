@@ -53,4 +53,7 @@ class ApiConstants {
   static const String weeklyReport = "$baseUrl/reports/weekly";
   static const String monthlyReport = "$baseUrl/reports/monthly";
   static const String riskProgression = "$baseUrl/reports/risk-progression";
+
+  // Content Library
+  static const String contentLibrary = "$baseUrl/content-library";
 }

@@ -154,4 +154,8 @@ class AppStrings {
   // Disclaimer
   static const String disclaimer =
       "هذا التطبيق لا يقدم تشخيصاً طبياً أو نفسياً، ولا يُعد بديلاً عن استشارة الطبيب أو المختص.";
+
+  // Content Library
+  static const String contentLibrary = "المحتوى التعليمي";
+  static const String noContentAvailable = "لا يوجد محتوى تعليمي متاح حالياً.";
 }

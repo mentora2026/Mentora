@@ -16,6 +16,7 @@ import 'providers/notification_provider.dart';
 import 'providers/profile_provider.dart';
 import 'providers/recommendation_provider.dart';
 import 'providers/reports_provider.dart';
+import 'providers/content_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,7 @@ class PsychSupportApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RecommendationProvider()),
         ChangeNotifierProvider(create: (_) => ReportsProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => ContentProvider()),
       ],
       child: MaterialApp(
         scaffoldMessengerKey: AppMessenger.key,
