@@ -240,16 +240,36 @@ def list_recommendations_admin(db: Session = Depends(get_db)):
 
 
 @router.post("/recommendations", response_model=AdminRecommendationOut, status_code=status.HTTP_201_CREATED)
-def create_recommendation(payload: RecommendationCreate, db: Session = Depends(get_db)):
+def create_recommendation(
+    payload: RecommendationCreate,
+    admin_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     rec = Recommendation(**payload.model_dump())
     db.add(rec)
+    db.flush()
+    
+    audit = AuditLog(
+        actor_user_id=admin_user.id,
+        action="recommendation_created",
+        target_table="recommendations",
+        target_id=rec.id,
+        metadata_json={"category": rec.category.value, "title_ar": rec.title_ar},
+    )
+    db.add(audit)
+    
     db.commit()
     db.refresh(rec)
     return rec
 
 
 @router.put("/recommendations/{recommendation_id}", response_model=AdminRecommendationOut)
-def update_recommendation(recommendation_id: str, payload: RecommendationUpdate, db: Session = Depends(get_db)):
+def update_recommendation(
+    recommendation_id: str,
+    payload: RecommendationUpdate,
+    admin_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     rec = db.query(Recommendation).filter(Recommendation.id == recommendation_id).first()
     if rec is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="التوصية غير موجودة")
@@ -258,25 +278,53 @@ def update_recommendation(recommendation_id: str, payload: RecommendationUpdate,
         setattr(rec, field, value)
 
     db.add(rec)
+    
+    audit = AuditLog(
+        actor_user_id=admin_user.id,
+        action="recommendation_updated",
+        target_table="recommendations",
+        target_id=rec.id,
+        metadata_json={"updated_fields": list(payload.model_dump(exclude_unset=True).keys())},
+    )
+    db.add(audit)
+    
     db.commit()
     db.refresh(rec)
     return rec
 
 
 @router.delete("/recommendations/{recommendation_id}", status_code=status.HTTP_204_NO_CONTENT)
-def deactivate_recommendation(recommendation_id: str, db: Session = Depends(get_db)):
+def deactivate_recommendation(
+    recommendation_id: str,
+    admin_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     rec = db.query(Recommendation).filter(Recommendation.id == recommendation_id).first()
     if rec is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="التوصية غير موجودة")
 
     rec.is_active = False
     db.add(rec)
+    
+    audit = AuditLog(
+        actor_user_id=admin_user.id,
+        action="recommendation_deactivated",
+        target_table="recommendations",
+        target_id=rec.id,
+    )
+    db.add(audit)
+    
     db.commit()
     return None
 
 
 @router.post("/patients/{patient_profile_id}/send-recommendation", response_model=AdminRecommendationOut, status_code=status.HTTP_201_CREATED)
-def send_direct_recommendation(patient_profile_id: str, payload: DirectRecommendationCreate, db: Session = Depends(get_db)):
+def send_direct_recommendation(
+    patient_profile_id: str,
+    payload: DirectRecommendationCreate,
+    admin_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     profile = db.query(PatientProfile).filter(PatientProfile.id == patient_profile_id).first()
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ملف المريض غير موجود")
@@ -298,6 +346,7 @@ def send_direct_recommendation(patient_profile_id: str, payload: DirectRecommend
         recommendation_id=rec.id,
     )
     db.add(patient_rec)
+    db.flush()
 
     # 3. Create Notification in DB
     notification = Notification(
@@ -307,6 +356,16 @@ def send_direct_recommendation(patient_profile_id: str, payload: DirectRecommend
         body_ar=payload.content_ar,
     )
     db.add(notification)
+    
+    audit = AuditLog(
+        actor_user_id=admin_user.id,
+        action="direct_recommendation_sent",
+        target_table="patient_recommendations",
+        target_id=patient_rec.id,
+        metadata_json={"patient_profile_id": str(profile.id), "recommendation_id": str(rec.id)},
+    )
+    db.add(audit)
+
     db.commit()
     db.refresh(rec)
 
@@ -336,9 +395,24 @@ def list_content_library(db: Session = Depends(get_db)):
 
 
 @router.post("/content-library", response_model=ContentLibraryOut, status_code=status.HTTP_201_CREATED)
-def create_content_item(payload: ContentLibraryCreate, db: Session = Depends(get_db)):
+def create_content_item(
+    payload: ContentLibraryCreate,
+    admin_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     item = ContentLibraryItem(**payload.model_dump())
     db.add(item)
+    db.flush()
+    
+    audit = AuditLog(
+        actor_user_id=admin_user.id,
+        action="content_item_created",
+        target_table="content_library",
+        target_id=item.id,
+        metadata_json={"content_type": item.content_type.value, "key": item.key},
+    )
+    db.add(audit)
+
     db.commit()
     db.refresh(item)
     return item

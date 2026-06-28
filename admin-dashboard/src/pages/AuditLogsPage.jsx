@@ -7,6 +7,11 @@ import { formatDateTime } from "../lib/format";
 
 const ACTION_LABELS = {
   user_status_updated: "تحديث حالة المستخدم",
+  recommendation_created: "إضافة توصية جديدة",
+  recommendation_updated: "تعديل توصية",
+  recommendation_deactivated: "تعطيل توصية",
+  direct_recommendation_sent: "إرسال توصية مباشرة للمريض",
+  content_item_created: "إضافة محتوى تعليمي جديد",
 };
 
 export default function AuditLogsPage() {
